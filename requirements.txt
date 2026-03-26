@@ -1,0 +1,28 @@
+# myBay - Requirements
+# Pinned to tested versions for stability
+
+# Core dependencies
+httpx==0.28.1          # HTTP client for APIs
+Pillow==12.1.0         # Image processing
+python-dotenv>=1.0.0   # Load API keys from .env (optional, has built-in fallback)
+
+# Mobile Camera Server
+fastapi==0.128.7       # Web framework
+uvicorn==0.40.0        # ASGI server
+python-multipart==0.0.22  # File uploads
+watchdog==6.0.0        # Filesystem watcher
+qrcode[pil]==8.2       # QR code generation
+websockets==16.0       # WebSocket support
+
+# Optional: Background removal (requires ~500MB model download on first use)
+rembg==2.0.72          # AI background removal
+onnxruntime==1.24.1    # Required by rembg
+
+# Desktop GUI
+customtkinter==5.2.2   # Modern Tkinter widgets
+
+# Packaging
+pyinstaller==6.18.0    # macOS/Windows app bundling
+
+# Development/Testing
+pytest==9.0.2          # Testing framework

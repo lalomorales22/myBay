@@ -1,0 +1,157 @@
+name: Build, Sign, and Notarize
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Import macOS signing certificate (optional)
+        if: ${{ secrets.MACOS_CERT_P12_BASE64 != '' }}
+        env:
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          MACOS_KEYCHAIN_PASSWORD: ${{ secrets.MACOS_KEYCHAIN_PASSWORD }}
+        run: |
+          python - <<'PY'
+          import base64, os, pathlib
+          pathlib.Path('signing-cert.p12').write_bytes(base64.b64decode(os.environ['MACOS_CERT_P12_BASE64']))
+          PY
+          security create-keychain -p "$MACOS_KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$MACOS_KEYCHAIN_PASSWORD" build.keychain
+          security import signing-cert.p12 -k build.keychain -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-keychain-settings -lut 21600 build.keychain
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$MACOS_KEYCHAIN_PASSWORD" build.keychain
+
+      - name: Store notarization profile (optional)
+        if: ${{ secrets.APPLE_ID != '' && secrets.APPLE_TEAM_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          MACOS_NOTARY_PROFILE: ${{ secrets.MACOS_NOTARY_PROFILE }}
+        run: |
+          PROFILE="${MACOS_NOTARY_PROFILE:-AC_NOTARY_PROFILE}"
+          xcrun notarytool store-credentials "$PROFILE" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD"
+          echo "MACOS_NOTARY_PROFILE_FROM_STORE=$PROFILE" >> "$GITHUB_ENV"
+
+      - name: Build macOS artifact
+        env:
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          MACOS_NOTARY_PROFILE: ${{ secrets.MACOS_NOTARY_PROFILE }}
+        run: |
+          set -euo pipefail
+          PROFILE="${MACOS_NOTARY_PROFILE:-}"
+          if [ -z "$PROFILE" ] && [ -n "${MACOS_NOTARY_PROFILE_FROM_STORE:-}" ]; then
+            PROFILE="$MACOS_NOTARY_PROFILE_FROM_STORE"
+            export MACOS_NOTARY_PROFILE="$PROFILE"
+          fi
+
+          if [ -n "${MACOS_SIGN_IDENTITY:-}" ] && [ -n "$PROFILE" ]; then
+            python build.py --dmg --sign --notarize
+          elif [ -n "${MACOS_SIGN_IDENTITY:-}" ]; then
+            python build.py --dmg --sign
+          else
+            python build.py --dmg
+          fi
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: myBay-macos
+          path: |
+            dist/myBay-1.0.0.dmg
+            dist/myBay.app
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build .exe
+        run: python build_windows.py --clean
+
+      - name: Decode Windows signing certificate (optional)
+        if: ${{ secrets.WIN_CERT_BASE64 != '' }}
+        shell: pwsh
+        run: |
+          [IO.File]::WriteAllBytes("$env:GITHUB_WORKSPACE\\win-cert.pfx", [Convert]::FromBase64String("${{ secrets.WIN_CERT_BASE64 }}"))
+
+      - name: Sign .exe (optional)
+        if: ${{ secrets.WIN_CERT_BASE64 != '' || secrets.WIN_CERT_SUBJECT != '' }}
+        shell: pwsh
+        env:
+          WIN_CERT_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
+          WIN_CERT_SUBJECT: ${{ secrets.WIN_CERT_SUBJECT }}
+          WIN_TIMESTAMP_URL: ${{ secrets.WIN_TIMESTAMP_URL }}
+          WIN_SIGN_TOOL: ${{ secrets.WIN_SIGN_TOOL }}
+        run: |
+          if ("${{ secrets.WIN_CERT_BASE64 }}" -ne "") {
+            $env:WIN_CERT_FILE = "$env:GITHUB_WORKSPACE\\win-cert.pfx"
+          }
+          python build_windows.py --sign-only
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: myBay-windows
+          path: dist/windows/myBay/**
+
+  build-linux:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 curl
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build .AppImage
+        run: python build_linux.py --clean
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: myBay-linux-appimage
+          path: dist/myBay-1.0.0-x86_64.AppImage

@@ -1,0 +1,50 @@
+# myBay
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# App specific
+queue/*
+!queue/.gitkeep
+tests/samples/
+*.log
+admin_files/receipts/*
+admin_files/documents/*
+!admin_files/receipts/.gitkeep
+!admin_files/documents/.gitkeep
+start.command
+
+# Credentials (NEVER commit these)
+.env
+.ebay_config.json
+*.db
+*.pem
+*.key
+credentials.json
+tokens.json
+
+# Landing page local data
+landing-page/*.sqlite
