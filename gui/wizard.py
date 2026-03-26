@@ -285,7 +285,7 @@ class SetupWizard(ctk.CTkToplevel):
                 )
                 ctk.CTkLabel(
                     self._ai_action_frame,
-                    text="ollama pull llava:7b",
+                    text="ollama pull qwen3.5:2b",
                     font=ctk.CTkFont(size=12, weight="bold"),
                 ).pack(pady=5)
                 if models:

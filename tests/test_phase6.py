@@ -86,7 +86,7 @@ def test_get_ollama_models_mock():
 
     mock_data = {
         "models": [
-            {"name": "llava:7b", "size": 4000000000},
+            {"name": "qwen3.5:2b", "size": 4000000000},
             {"name": "llama3.2:latest", "size": 3000000000},
         ]
     }
@@ -98,7 +98,7 @@ def test_get_ollama_models_mock():
         mock_get.return_value = mock_resp
         models = get_ollama_models("http://fake:11434")
         print_result(len(models) == 2, f"Got {len(models)} models")
-        print_result("llava:7b" in models, "llava:7b found")
+        print_result("qwen3.5:2b" in models, "qwen3.5:2b found")
 
     return True
 
@@ -108,9 +108,9 @@ def test_has_vision_model_mock():
     print_header("Test: has_vision_model (mocked)")
 
     # With a vision model
-    with patch("core.ollama.get_ollama_models", return_value=["llava:7b", "llama3.2:latest"]):
+    with patch("core.ollama.get_ollama_models", return_value=["qwen3.5:2b", "llama3.2:latest"]):
         result = has_vision_model("http://fake:11434")
-        print_result(result is True, "Detects llava as vision model")
+        print_result(result is True, "Detects qwen3.5 as vision model")
 
     # Without a vision model
     with patch("core.ollama.get_ollama_models", return_value=["llama3.2:latest", "phi:latest"]):
@@ -324,7 +324,7 @@ def test_analyzer_factory_auto_detect():
     print_header("Test: analyzer factory — auto-detect")
 
     # Priority 1: OLLAMA_VISION_MODEL set + running
-    with patch.dict(os.environ, {"OLLAMA_VISION_MODEL": "llava:7b"}, clear=False):
+    with patch.dict(os.environ, {"OLLAMA_VISION_MODEL": "qwen3.5:2b"}, clear=False):
         with patch("core.analyzer_factory.check_ollama_status", return_value=True):
             with patch("core.analyzer_factory._backend_from_presets", return_value=None):
                 analyzer = get_analyzer(None)
@@ -366,7 +366,7 @@ def test_detect_available_backend():
     print_header("Test: detect_available_backend")
 
     # Ollama env var + running
-    with patch.dict(os.environ, {"OLLAMA_VISION_MODEL": "llava", "OPENAI_API_KEY": ""}, clear=False):
+    with patch.dict(os.environ, {"OLLAMA_VISION_MODEL": "qwen3.5", "OPENAI_API_KEY": ""}, clear=False):
         with patch("core.analyzer_factory.check_ollama_status", return_value=True):
             result = detect_available_backend()
             print_result(result == "ollama", "OLLAMA_VISION_MODEL + running -> ollama")
@@ -395,7 +395,7 @@ def test_presets_ai_fields():
     # Default values
     presets = MybayPresets()
     print_result(presets.ai_backend == "auto", f"Default ai_backend: {presets.ai_backend}")
-    print_result(presets.ollama_model == "llava:7b", f"Default ollama_model: {presets.ollama_model}")
+    print_result(presets.ollama_model == "qwen3.5:2b", f"Default ollama_model: {presets.ollama_model}")
     print_result(presets.ollama_url == "http://localhost:11434", f"Default ollama_url: {presets.ollama_url}")
 
     # Serialize and deserialize
@@ -406,7 +406,7 @@ def test_presets_ai_fields():
 
     loaded = MybayPresets.from_dict(data)
     print_result(loaded.ai_backend == "auto", "Roundtrip ai_backend")
-    print_result(loaded.ollama_model == "llava:7b", "Roundtrip ollama_model")
+    print_result(loaded.ollama_model == "qwen3.5:2b", "Roundtrip ollama_model")
 
     # Custom values
     presets.ai_backend = "ollama"
@@ -428,7 +428,7 @@ def test_presets_ai_fields():
     }
     loaded = MybayPresets.from_dict(old_data)
     print_result(loaded.ai_backend == "auto", "Old data defaults ai_backend to auto")
-    print_result(loaded.ollama_model == "llava:7b", "Old data defaults ollama_model")
+    print_result(loaded.ollama_model == "qwen3.5:2b", "Old data defaults ollama_model")
     print_result(loaded.turbo_mode is True, "Old data preserves turbo_mode")
 
     return True

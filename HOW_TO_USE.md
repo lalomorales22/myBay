@@ -67,9 +67,9 @@ If you don't want to create an OpenAI account or pay for API usage, you can use 
    ```bash
    ollama serve
    ```
-3. Pull a vision model (recommended: `llava:7b`):
+3. Pull a vision model (recommended: `qwen3.5:2b`):
    ```bash
-   ollama pull llava:7b
+   ollama pull qwen3.5:2b
    ```
 4. That's it! myBay will auto-detect Ollama when you launch it.
 
@@ -78,7 +78,7 @@ If you don't want to create an OpenAI account or pay for API usage, you can use 
 Add to your `.env` file:
 
 ```env
-OLLAMA_VISION_MODEL=llava:7b
+OLLAMA_VISION_MODEL=qwen3.5:2b
 OLLAMA_URL=http://localhost:11434
 ```
 
@@ -86,10 +86,11 @@ OLLAMA_URL=http://localhost:11434
 
 | Model | RAM Needed | Quality | Speed |
 |-------|-----------|---------|-------|
+| `qwen3.5:2b` | ~2GB | **Good (recommended)** | Fast |
 | `moondream` | ~2GB | Basic | Fast |
-| `llava:7b` | ~5GB | **Good (recommended)** | Medium |
-| `llama3.2-vision:11b` | ~8GB | Best local | Slower |
 | `minicpm-v` | ~3GB | Good | Fast |
+| `llava:7b` | ~5GB | Good | Medium |
+| `llama3.2-vision:11b` | ~8GB | Best local | Slower |
 
 ### Trade-offs vs OpenAI:
 

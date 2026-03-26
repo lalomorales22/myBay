@@ -26,7 +26,7 @@ from core.vision import (
 )
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
-DEFAULT_OLLAMA_MODEL = "llava:7b"
+DEFAULT_OLLAMA_MODEL = "qwen3.5:2b"
 
 # Ollama doesn't support OpenAI-style json_schema enforcement, so we
 # embed the schema in the prompt and ask for strict JSON output.
@@ -83,7 +83,7 @@ def has_vision_model(
 ) -> bool:
     """Check if at least one known vision-capable model is pulled."""
     models = get_ollama_models(base_url, timeout)
-    vision_families = {"llava", "llama3.2-vision", "moondream", "minicpm-v", "bakllava"}
+    vision_families = {"qwen3.5", "llava", "llama3.2-vision", "moondream", "minicpm-v", "bakllava"}
     for name in models:
         base_name = name.split(":")[0].lower()
         if base_name in vision_families:

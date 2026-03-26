@@ -215,7 +215,7 @@ python3 run.py --gui
 | Backend | Cost | Quality | Privacy | Setup |
 |---------|------|---------|---------|-------|
 | **OpenAI** | ~$0.01-0.05/listing | Best (vision + web search pricing) | Cloud | API key required |
-| **Ollama** | Free | Good (local vision model) | Fully local | `brew install ollama && ollama pull llava:7b` |
+| **Ollama** | Free | Good (local vision model) | Fully local | `brew install ollama && ollama pull qwen3.5:2b` |
 
 You only need **one**. Ollama lets you try the app with zero accounts and zero cost. OpenAI gives the best results and includes live web-search pricing.
 
@@ -223,10 +223,11 @@ You only need **one**. Ollama lets you try the app with zero accounts and zero c
 
 | Model | Size | RAM | Speed | Notes |
 |-------|------|-----|-------|-------|
+| `qwen3.5:2b` | 2B | ~2GB | Fast | **Recommended default** — small, fast, vision-capable |
 | `moondream` | 1.7B | ~2GB | Fast | Lightest option, good for basic product ID |
-| `llava:7b` | 7B | ~5GB | Medium | **Recommended default** — solid quality |
-| `llama3.2-vision:11b` | 11B | ~8GB | Slower | Best local quality |
 | `minicpm-v` | 3B | ~3GB | Fast | Good middle ground |
+| `llava:7b` | 7B | ~5GB | Medium | Solid quality, needs more RAM |
+| `llama3.2-vision:11b` | 11B | ~8GB | Slower | Best local quality |
 
 ### eBay Developer Setup
 
@@ -267,13 +268,13 @@ export OPENAI_VISION_MODEL="gpt-5.4-nano-2026-03-17"
 ```bash
 brew install ollama
 ollama serve          # start the server (runs in background)
-ollama pull llava:7b  # download a vision model
+ollama pull qwen3.5:2b  # download a vision model
 ```
 
 Optional overrides:
 
 ```bash
-export OLLAMA_VISION_MODEL="llava:7b"
+export OLLAMA_VISION_MODEL="qwen3.5:2b"
 export OLLAMA_URL="http://localhost:11434"
 ```
 
@@ -284,7 +285,7 @@ Or use `.env` in the project root:
 OPENAI_API_KEY=sk-...
 
 # Ollama (comment out if using OpenAI)
-# OLLAMA_VISION_MODEL=llava:7b
+# OLLAMA_VISION_MODEL=qwen3.5:2b
 # OLLAMA_URL=http://localhost:11434
 
 NGROK_AUTHTOKEN=your_ngrok_token

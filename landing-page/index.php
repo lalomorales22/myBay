@@ -2704,7 +2704,7 @@ $csrf = csrf_token();
                 <div class="setup-step-num">1</div>
                 <h3>Set Up AI (Free or Paid)</h3>
                 <p><strong>Free option:</strong> Install Ollama and pull a vision model &mdash; zero accounts, zero cost.<br><strong>Paid option:</strong> Get an OpenAI API key for best quality + web search pricing (~$0.01-0.05/listing).</p>
-                <code>ollama pull llava:7b</code>
+                <code>ollama pull qwen3.5:2b</code>
             </div>
             <div class="setup-card">
                 <div class="setup-step-num">2</div>

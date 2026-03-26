@@ -97,7 +97,7 @@ def _make_ollama_analyzer() -> OllamaAnalyzer:
             "Ollama backend selected but Ollama is not running.\n"
             "Install: brew install ollama\n"
             "Start:   ollama serve\n"
-            "Pull:    ollama pull llava:7b"
+            "Pull:    ollama pull qwen3.5:2b"
         )
     return OllamaAnalyzer()
 
@@ -122,7 +122,7 @@ def _auto_detect() -> Analyzer:
         "No AI backend available. Set up one of these:\n\n"
         "Option A — Ollama (free, local, no account needed):\n"
         "  brew install ollama && ollama serve\n"
-        "  ollama pull llava:7b\n\n"
+        "  ollama pull qwen3.5:2b\n\n"
         "Option B — OpenAI (cloud, paid, best quality):\n"
         "  Set OPENAI_API_KEY in your environment or .env file\n"
         "  Get a key at https://platform.openai.com/api-keys"

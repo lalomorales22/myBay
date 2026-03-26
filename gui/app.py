@@ -1184,7 +1184,7 @@ class MyBayApp(ctk.CTk):
         ollama_frame.pack(fill="x", padx=20, pady=(5, 5))
 
         ctk.CTkLabel(ollama_frame, text="Ollama Model:", font=FONT_SMALL).pack(anchor="w")
-        self._ollama_model_entry = ctk.CTkEntry(ollama_frame, width=300, placeholder_text="llava:7b")
+        self._ollama_model_entry = ctk.CTkEntry(ollama_frame, width=300, placeholder_text="qwen3.5:2b")
         self._ollama_model_entry.insert(0, _p.ollama_model)
         self._ollama_model_entry.pack(anchor="w", pady=(2, 5))
 
@@ -1266,7 +1266,7 @@ class MyBayApp(ctk.CTk):
         from core.presets import get_presets, save_presets
         presets = get_presets()
         presets.ai_backend = self._ai_backend_var.get()
-        presets.ollama_model = self._ollama_model_entry.get().strip() or "llava:7b"
+        presets.ollama_model = self._ollama_model_entry.get().strip() or "qwen3.5:2b"
         presets.ollama_url = self._ollama_url_entry.get().strip() or "http://localhost:11434"
         save_presets(presets)
         self._ai_test_label.configure(text="Settings saved!", text_color=COLORS["success"])

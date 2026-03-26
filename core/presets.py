@@ -122,7 +122,7 @@ class MybayPresets:
     
     # AI backend
     ai_backend: str = "auto"  # "openai", "ollama", "auto"
-    ollama_model: str = "llava:7b"
+    ollama_model: str = "qwen3.5:2b"
     ollama_url: str = "http://localhost:11434"
 
     # Feature toggles
@@ -162,7 +162,7 @@ class MybayPresets:
             return_policy_id=data.get("return_policy_id", ""),
             fulfillment_policy_id=data.get("fulfillment_policy_id", ""),
             ai_backend=data.get("ai_backend", "auto"),
-            ollama_model=data.get("ollama_model", "llava:7b"),
+            ollama_model=data.get("ollama_model", "qwen3.5:2b"),
             ollama_url=data.get("ollama_url", "http://localhost:11434"),
             turbo_mode=data.get("turbo_mode", False),
             turbo_threshold=data.get("turbo_threshold", 0.90),
