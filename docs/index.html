@@ -1,0 +1,1773 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>myBay — Snap. List. Sell.</title>
+    <meta name="description" content="Turn iPhone photos into eBay listings in under 60 seconds. AI-powered product analysis, one-click publishing, and a full business backend for eBay sellers.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --bg-raised: #18181b;
+            --bg-card: #1c1c22;
+            --bg-card-hover: #232329;
+            --border: #27272a;
+            --border-light: #3f3f46;
+            --text: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-glow: rgba(59, 130, 246, 0.15);
+            --green: #22c55e;
+            --green-glow: rgba(34, 197, 94, 0.15);
+            --orange: #f97316;
+            --orange-glow: rgba(249, 115, 22, 0.15);
+            --purple: #a855f7;
+            --purple-glow: rgba(168, 85, 247, 0.15);
+            --red: #ef4444;
+            --yellow: #eab308;
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+            --shadow-lg: 0 20px 40px rgba(0,0,0,0.5);
+            --shadow-glow: 0 0 60px rgba(59,130,246,0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ── Hero background ── */
+        .hero-bg {
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-bg::before {
+            content: "";
+            position: absolute;
+            top: -40%; left: -20%;
+            width: 140%; height: 180%;
+            background:
+                radial-gradient(ellipse 800px 600px at 20% 10%, rgba(59,130,246,0.18), transparent 60%),
+                radial-gradient(ellipse 600px 500px at 80% 20%, rgba(168,85,247,0.12), transparent 55%),
+                radial-gradient(ellipse 500px 400px at 50% 60%, rgba(34,197,94,0.06), transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center top, black 20%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── Navigation ── */
+        .site-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--text);
+        }
+        .nav-logo {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 14px; color: #fff;
+            box-shadow: 0 0 20px rgba(59,130,246,0.3);
+        }
+        .nav-wordmark {
+            font-weight: 700;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: color 0.15s, background 0.15s;
+        }
+        .nav-links a:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
+        }
+        .nav-links .nav-cta {
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+        }
+        .nav-links .nav-cta:hover {
+            background: var(--accent-hover);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: var(--bg-raised);
+            margin-bottom: 28px;
+        }
+        .hero-badge .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.2rem);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #d4d4d8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-sub {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 620px;
+            margin: 0 auto 36px;
+            line-height: 1.7;
+        }
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .btn-primary, .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 24px rgba(59,130,246,0.25);
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 0 32px rgba(59,130,246,0.35);
+        }
+        .btn-secondary {
+            background: var(--bg-raised);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            border-color: var(--border-light);
+        }
+        .hero-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* ── App Mockup ── */
+        .mockup-container {
+            max-width: 960px;
+            margin: 48px auto 0;
+            perspective: 1200px;
+        }
+        .app-window {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #111114;
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+        .window-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 18px;
+            background: #0c0c0f;
+            border-bottom: 1px solid var(--border);
+        }
+        .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .window-dot.r { background: #ff5f57; }
+        .window-dot.y { background: #febc2e; }
+        .window-dot.g { background: #28c840; }
+        .window-title {
+            flex: 1;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-right: 56px;
+        }
+        .window-body {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            min-height: 380px;
+        }
+        .mock-sidebar {
+            background: #0e0e12;
+            border-right: 1px solid var(--border);
+            padding: 16px 12px;
+        }
+        .mock-sidebar-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .mock-draft {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.02);
+            cursor: default;
+        }
+        .mock-draft.active {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+        .mock-draft-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mock-draft-price {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--green);
+            margin-bottom: 4px;
+        }
+        .mock-confidence {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            overflow: hidden;
+        }
+        .mock-confidence-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--green));
+        }
+        .mock-main {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .mock-images {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .mock-img-placeholder {
+            aspect-ratio: 4/3;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            opacity: 0.7;
+        }
+        .mock-img-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+        .mock-img-thumb {
+            aspect-ratio: 1;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            background: rgba(255,255,255,0.02);
+        }
+        .mock-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .mock-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .mock-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .mock-input {
+            padding: 9px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            color: var(--text);
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+        .mock-input.title-input {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .mock-textarea {
+            padding: 9px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            min-height: 72px;
+            font-family: inherit;
+        }
+        .mock-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .mock-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+        }
+        .mock-btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-raised);
+            color: var(--text-secondary);
+        }
+        .mock-btn.publish {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            flex: 1;
+        }
+        .mock-statusbar {
+            grid-column: 1 / -1;
+            padding: 10px 18px;
+            border-top: 1px solid var(--border);
+            background: #0a0a0d;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 20px;
+        }
+        .mock-statusbar span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ── Trust bar ── */
+        .trust-bar {
+            padding: 48px 0;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .trust-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .trust-item {
+            padding: 28px 24px;
+            text-align: center;
+            background: var(--bg);
+        }
+        .trust-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: -0.02em;
+        }
+        .trust-value.blue { color: var(--accent); }
+        .trust-value.green { color: var(--green); }
+        .trust-value.orange { color: var(--orange); }
+        .trust-value.purple { color: var(--purple); }
+        .trust-label {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Section styling ── */
+        .section {
+            padding: 80px 0;
+        }
+        .section-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 48px;
+        }
+        .section-label {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 12px;
+            font-family: "JetBrains Mono", monospace;
+        }
+        .section-title {
+            font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+            margin-bottom: 14px;
+        }
+        .section-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ── How It Works ── */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .step {
+            padding: 32px 24px;
+            background: var(--bg);
+            text-align: center;
+            position: relative;
+        }
+        .step-number {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            margin-bottom: 16px;
+        }
+        .step:nth-child(1) .step-number { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); }
+        .step:nth-child(2) .step-number { background: var(--purple-glow); color: var(--purple); border: 1px solid rgba(168,85,247,0.3); }
+        .step:nth-child(3) .step-number { background: var(--orange-glow); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+        .step:nth-child(4) .step-number { background: var(--green-glow); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+        .step-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .step h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+        .step p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .step-arrow {
+            position: absolute;
+            right: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            z-index: 2;
+        }
+
+        /* ── Features ── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .feature-card {
+            padding: 28px 24px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-raised);
+            transition: all 0.2s;
+        }
+        .feature-card:hover {
+            border-color: var(--border-light);
+            background: var(--bg-card);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .feature-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+        }
+        .fi-blue { background: var(--accent-glow); border: 1px solid rgba(59,130,246,0.2); }
+        .fi-green { background: var(--green-glow); border: 1px solid rgba(34,197,94,0.2); }
+        .fi-orange { background: var(--orange-glow); border: 1px solid rgba(249,115,22,0.2); }
+        .fi-purple { background: var(--purple-glow); border: 1px solid rgba(168,85,247,0.2); }
+        .feature-card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+        .feature-card p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .feature-tag {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            font-family: "JetBrains Mono", monospace;
+            padding: 3px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+        .feature-card.featured {
+            grid-column: span 2;
+            background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(168,85,247,0.06));
+            border-color: rgba(59,130,246,0.2);
+        }
+        .feature-card.featured:hover {
+            border-color: rgba(59,130,246,0.35);
+        }
+
+        /* ── Screenshots section ── */
+        .screenshots-section {
+            padding: 80px 0;
+            background: var(--bg-raised);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .screenshot-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 36px;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 4px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            border: 1px solid var(--border);
+        }
+        .screenshot-tabs input[type="radio"] { display: none; }
+        .screenshot-tabs label {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .screenshot-tabs input[type="radio"]:checked + label {
+            background: var(--accent);
+            color: #fff;
+        }
+        .tab-content { display: none; }
+        #tab-editor:checked ~ .tab-panels .panel-editor,
+        #tab-admin:checked ~ .tab-panels .panel-admin,
+        #tab-mobile:checked ~ .tab-panels .panel-mobile { display: block; }
+
+        /* ── Admin showcase ── */
+        .admin-showcase-window {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: #111114;
+            box-shadow: var(--shadow-lg);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .admin-mock-body {
+            padding: 20px;
+            min-height: 300px;
+        }
+        .admin-mock-tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 16px;
+            background: var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .admin-mock-tab {
+            padding: 8px 14px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            background: var(--bg-raised);
+            color: var(--text-muted);
+            flex: 1;
+            text-align: center;
+        }
+        .admin-mock-tab.active {
+            background: var(--accent);
+            color: #fff;
+        }
+        .admin-mock-chat {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chat-bubble {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            max-width: 80%;
+        }
+        .chat-user {
+            background: var(--accent);
+            color: #fff;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bot {
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .chat-entry {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(34,197,94,0.1);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            color: var(--green);
+            font-weight: 500;
+        }
+
+        /* ── Mobile mockup ── */
+        .phone-frame {
+            width: 280px;
+            margin: 0 auto;
+            border-radius: 36px;
+            border: 3px solid #333;
+            background: #111;
+            padding: 12px;
+            box-shadow: var(--shadow-lg);
+        }
+        .phone-notch {
+            width: 100px;
+            height: 24px;
+            background: #111;
+            border-radius: 0 0 16px 16px;
+            margin: -12px auto 8px;
+        }
+        .phone-screen {
+            border-radius: 24px;
+            overflow: hidden;
+            background: #0d1117;
+        }
+        .phone-header {
+            padding: 14px 16px;
+            text-align: center;
+            background: linear-gradient(180deg, #111827, #0d1117);
+            border-bottom: 1px solid var(--border);
+        }
+        .phone-header h4 {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .phone-camera-area {
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+        .phone-viewfinder {
+            width: 100%;
+            aspect-ratio: 3/4;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px dashed rgba(59,130,246,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+        .phone-shutter {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .phone-shutter-inner {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: #fff;
+        }
+        .phone-thumbs {
+            display: flex;
+            gap: 6px;
+        }
+        .phone-thumb {
+            width: 40px; height: 40px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        /* ── Business section ── */
+        .biz-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .biz-card {
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-raised);
+        }
+        .biz-card h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .biz-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ── Setup section ── */
+        .setup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+        .setup-card {
+            padding: 28px 24px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-raised);
+            text-align: center;
+        }
+        .setup-step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: var(--accent-glow);
+            border: 1px solid rgba(59,130,246,0.3);
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-bottom: 14px;
+        }
+        .setup-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .setup-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .setup-card code {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.06);
+            font-size: 0.78rem;
+            font-family: "JetBrains Mono", monospace;
+            color: var(--text-muted);
+        }
+
+        /* ── Requirements ── */
+        .req-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .req-table th, .req-table td {
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 0.88rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .req-table th {
+            background: var(--bg-raised);
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .req-table td {
+            color: var(--text-secondary);
+        }
+        .req-table td:first-child {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .req-table tr:last-child td { border-bottom: none; }
+
+        /* ── FAQ ── */
+        .faq-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .faq-item {
+            padding: 24px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-raised);
+        }
+        .faq-item h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .faq-item p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ── Download CTA ── */
+        .cta-section {
+            padding: 80px 0;
+            text-align: center;
+        }
+        .cta-box {
+            padding: 56px 40px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(168,85,247,0.08));
+            border: 1px solid rgba(59,130,246,0.2);
+        }
+        .cta-box h2 {
+            font-size: clamp(1.5rem, 3vw, 2.2rem);
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+        .cta-box p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .download-grid {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .dl-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-width: 220px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .dl-btn-active {
+            background: var(--accent);
+            color: #fff;
+            border: 1px solid var(--accent);
+        }
+        .dl-btn-active:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        .dl-btn-disabled {
+            background: rgba(255,255,255,0.03);
+            color: var(--text-muted);
+            border: 1px dashed var(--border);
+            cursor: default;
+        }
+        .dl-pill {
+            font-size: 0.65rem;
+            font-weight: 600;
+            font-family: "JetBrains Mono", monospace;
+            padding: 3px 8px;
+            border-radius: 999px;
+        }
+        .dl-pill.live {
+            background: rgba(34,197,94,0.15);
+            color: var(--green);
+            border: 1px solid rgba(34,197,94,0.3);
+        }
+        .dl-pill.soon {
+            background: rgba(234,179,8,0.1);
+            color: var(--yellow);
+            border: 1px solid rgba(234,179,8,0.2);
+        }
+
+        /* ── Install code block ── */
+        .install-block {
+            max-width: 480px;
+            margin: 0 auto 24px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            text-align: left;
+        }
+        .install-block code {
+            display: block;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.85rem;
+            line-height: 2;
+            color: var(--text-secondary);
+        }
+        .install-block code .prompt {
+            color: var(--green);
+            user-select: none;
+        }
+        .install-block code .cmd {
+            color: var(--text);
+        }
+
+        /* ── Community section ── */
+        .community-section {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+        }
+        .community-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .community-card {
+            padding: 28px 24px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-raised);
+            text-align: center;
+        }
+        .community-card h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .community-card p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+        .community-card a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.15s;
+        }
+        .community-card a:hover {
+            color: var(--accent-hover);
+        }
+
+        /* ── Footer ── */
+        .site-footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .footer-brand .nav-logo {
+            width: 24px; height: 24px;
+            font-size: 10px;
+            border-radius: 6px;
+        }
+        .footer-note {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            max-width: 400px;
+            line-height: 1.5;
+        }
+        .footer-links {
+            display: flex;
+            gap: 16px;
+            list-style: none;
+        }
+        .footer-links a {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+        .footer-links a:hover { color: var(--text-secondary); }
+
+        /* ── Responsive ── */
+        @media (max-width: 980px) {
+            .window-body { grid-template-columns: 1fr; }
+            .mock-sidebar { display: none; }
+            .mock-main { grid-template-columns: 1fr; }
+            .features-grid { grid-template-columns: 1fr 1fr; }
+            .feature-card.featured { grid-column: span 2; }
+            .steps-grid { grid-template-columns: 1fr 1fr; }
+            .step-arrow { display: none; }
+            .biz-grid { grid-template-columns: 1fr; }
+            .setup-grid { grid-template-columns: 1fr; }
+            .faq-grid { grid-template-columns: 1fr; }
+            .trust-grid { grid-template-columns: 1fr 1fr; }
+            .community-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .container { padding: 0 16px; }
+            .hero { padding: 50px 0 40px; }
+            .section { padding: 50px 0; }
+            .features-grid,
+            .steps-grid,
+            .trust-grid { grid-template-columns: 1fr; }
+            .feature-card.featured { grid-column: span 1; }
+            .hero-actions { flex-direction: column; align-items: center; }
+            .nav-links { gap: 4px; }
+            .nav-links a { padding: 8px 10px; font-size: 0.8rem; }
+            .download-grid { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+<div class="hero-bg">
+    <div class="container">
+
+        <!-- Navigation -->
+        <nav class="site-nav">
+            <a class="nav-brand" href="./">
+                <div class="nav-logo">m</div>
+                <span class="nav-wordmark">myBay</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#setup">Setup</a></li>
+                <li><a href="https://github.com/lalomorales22/myBay" class="nav-cta">GitHub</a></li>
+            </ul>
+        </nav>
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                Open source &middot; MIT License &middot; Free local AI &middot; Production-ready
+            </div>
+
+            <h1>eBay listings in under 60 seconds.</h1>
+
+            <p class="hero-sub">Snap photos on your phone, let AI do the rest. myBay turns iPhone photos into complete, published eBay listings with one click. Built for real sellers who want speed without losing quality.</p>
+
+            <div class="hero-actions">
+                <a href="#setup" class="btn-primary">Get Started</a>
+                <a href="#how-it-works" class="btn-secondary">See how it works</a>
+            </div>
+            <p class="hero-note">Open Source &middot; Free &middot; macOS, Linux, WSL</p>
+        </section>
+
+        <!-- App Mockup -->
+        <div class="mockup-container">
+            <div class="app-window">
+                <div class="window-bar">
+                    <span class="window-dot r"></span>
+                    <span class="window-dot y"></span>
+                    <span class="window-dot g"></span>
+                    <span class="window-title">myBay &mdash; Listing Editor</span>
+                </div>
+                <div class="window-body">
+                    <div class="mock-sidebar">
+                        <div class="mock-sidebar-title">Draft Queue</div>
+                        <div class="mock-draft active">
+                            <div class="mock-draft-title">Vintage Polaroid Camera</div>
+                            <div class="mock-draft-price">$45.00</div>
+                            <div class="mock-confidence"><div class="mock-confidence-fill" style="width:92%"></div></div>
+                        </div>
+                        <div class="mock-draft">
+                            <div class="mock-draft-title">Nike Air Max 90</div>
+                            <div class="mock-draft-price">$89.99</div>
+                            <div class="mock-confidence"><div class="mock-confidence-fill" style="width:88%"></div></div>
+                        </div>
+                        <div class="mock-draft">
+                            <div class="mock-draft-title">Vintage Levi's 501</div>
+                            <div class="mock-draft-price">$34.00</div>
+                            <div class="mock-confidence"><div class="mock-confidence-fill" style="width:95%"></div></div>
+                        </div>
+                        <div class="mock-draft">
+                            <div class="mock-draft-title">KitchenAid Mixer</div>
+                            <div class="mock-draft-price">$120.00</div>
+                            <div class="mock-confidence"><div class="mock-confidence-fill" style="width:84%"></div></div>
+                        </div>
+                    </div>
+                    <div class="mock-main">
+                        <div class="mock-images">
+                            <div class="mock-img-placeholder">&#128247;</div>
+                            <div class="mock-img-row">
+                                <div class="mock-img-thumb">&#128247;</div>
+                                <div class="mock-img-thumb">&#128247;</div>
+                                <div class="mock-img-thumb">+</div>
+                            </div>
+                        </div>
+                        <div class="mock-form">
+                            <div class="mock-field">
+                                <div class="mock-label">Title</div>
+                                <div class="mock-input title-input">Vintage Polaroid OneStep Close-Up 600 Camera</div>
+                            </div>
+                            <div class="mock-row">
+                                <div class="mock-field">
+                                    <div class="mock-label">Category</div>
+                                    <div class="mock-input">Cameras &amp; Photo</div>
+                                </div>
+                                <div class="mock-field">
+                                    <div class="mock-label">Condition</div>
+                                    <div class="mock-input">Used - Very Good</div>
+                                </div>
+                            </div>
+                            <div class="mock-row">
+                                <div class="mock-field">
+                                    <div class="mock-label">Price</div>
+                                    <div class="mock-input" style="color: var(--green); font-weight:700;">$45.00</div>
+                                </div>
+                                <div class="mock-field">
+                                    <div class="mock-label">AI Confidence</div>
+                                    <div class="mock-input" style="color: var(--accent);">92% &mdash; High</div>
+                                </div>
+                            </div>
+                            <div class="mock-field">
+                                <div class="mock-label">Description</div>
+                                <div class="mock-textarea">Great condition vintage Polaroid OneStep camera with close-up lens. Tested and working. Comes with original strap. Film not included.</div>
+                            </div>
+                            <div class="mock-actions">
+                                <div class="mock-btn">Save</div>
+                                <div class="mock-btn">Delete</div>
+                                <div class="mock-btn publish">Publish to eBay</div>
+                            </div>
+                        </div>
+                        <div class="mock-statusbar">
+                            <span>&#9679; Today: 12 listed</span>
+                            <span>&#9679; 3 sold</span>
+                            <span>&#9679; $247 revenue</span>
+                            <span>&#9679; 48 min saved</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trust Bar -->
+<section class="trust-bar">
+    <div class="container">
+        <div class="trust-grid">
+            <div class="trust-item">
+                <div class="trust-value blue">&lt; 60s</div>
+                <div class="trust-label">Photo to live listing</div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-value green">AI-Powered</div>
+                <div class="trust-label">OpenAI vision + web search</div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-value purple">Local-First</div>
+                <div class="trust-label">Your data stays on your machine</div>
+            </div>
+            <div class="trust-item">
+                <div class="trust-value orange">Open Source</div>
+                <div class="trust-label">MIT License &middot; Free forever</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="section" id="how-it-works">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">How It Works</div>
+            <h2 class="section-title">From photo to listing in four steps</h2>
+            <p class="section-desc">No manual data entry. No copy-pasting from other listings. Just snap and sell.</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step">
+                <div class="step-icon">&#128247;</div>
+                <div class="step-number">1</div>
+                <h3>Snap Photos</h3>
+                <p>Scan the QR code with your phone. Take 1-3 photos of your item. Photos transfer to your desktop instantly over WiFi.</p>
+                <span class="step-arrow">&#8594;</span>
+            </div>
+            <div class="step">
+                <div class="step-icon">&#129302;</div>
+                <div class="step-number">2</div>
+                <h3>AI Analyzes</h3>
+                <p>OpenAI identifies the product, generates a title, description, category, condition, and researches current market prices.</p>
+                <span class="step-arrow">&#8594;</span>
+            </div>
+            <div class="step">
+                <div class="step-icon">&#9998;</div>
+                <div class="step-number">3</div>
+                <h3>Review &amp; Edit</h3>
+                <p>Everything appears in your draft queue. Tweak the title, adjust the price, or let Turbo Mode auto-publish high-confidence items.</p>
+                <span class="step-arrow">&#8594;</span>
+            </div>
+            <div class="step">
+                <div class="step-icon">&#128640;</div>
+                <div class="step-number">4</div>
+                <h3>Publish</h3>
+                <p>One click uploads images to eBay and creates the listing. Verified via eBay API with a direct link to your live listing.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="section" id="features" style="padding-top:40px;">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Features</div>
+            <h2 class="section-title">Everything you need to list fast and run the business</h2>
+            <p class="section-desc">myBay handles listing creation and business management in one app.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card featured">
+                <div class="feature-icon fi-blue">&#129302;</div>
+                <h3>AI Vision + Web Search</h3>
+                <p>Analyze product photos with OpenAI (cloud, best quality + web search pricing) or Ollama (free, local, fully private). Both generate eBay-optimized titles, descriptions, and pricing. Uses strict JSON schema validation so output is always clean and structured.</p>
+                <span class="feature-tag">OpenAI or Ollama</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-green">&#128241;</div>
+                <h3>Phone Camera Integration</h3>
+                <p>Scan a QR code to open the camera on your phone. Photos go straight to your desktop over WiFi. No cables, no AirDrop, no file management.</p>
+                <span class="feature-tag">QR + WebSocket</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-orange">&#9889;</div>
+                <h3>Turbo Mode</h3>
+                <p>High-confidence items auto-publish without review. Includes a 30-second undo window so nothing goes live that shouldn't.</p>
+                <span class="feature-tag">Auto-Publish</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-purple">&#128176;</div>
+                <h3>Smart Pricing</h3>
+                <p>Compares your item against current eBay listings using the Browse API. Shows average, median, min, and max market prices.</p>
+                <span class="feature-tag">Market Data</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-green">&#127912;</div>
+                <h3>Background Removal</h3>
+                <p>Automatic AI-powered background removal for professional white-background product photos. Optional &mdash; runs locally on your machine.</p>
+                <span class="feature-tag">rembg</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-blue">&#128268;</div>
+                <h3>Offline Support</h3>
+                <p>Lost internet? Listings queue locally and auto-sync when your connection comes back. Never lose work.</p>
+                <span class="feature-tag">Local Queue</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-orange">&#128737;</div>
+                <h3>Publish Recovery</h3>
+                <p>Handles invalid condition/category combos, duplicate offers, and missing item specifics automatically with retries and fallbacks.</p>
+                <span class="feature-tag">Auto-Retry</span>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon fi-purple">&#9989;</div>
+                <h3>API Verification</h3>
+                <p>After publishing, the app verifies your listing is live via eBay Browse API and gives you a direct link. No guesswork.</p>
+                <span class="feature-tag">Verified</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Screenshots / Tabs Section -->
+<section class="screenshots-section" id="screenshots">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">App Preview</div>
+            <h2 class="section-title">See it in action</h2>
+            <p class="section-desc">Three interfaces, one seamless workflow.</p>
+        </div>
+
+        <div class="screenshot-tabs">
+            <input type="radio" name="tab" id="tab-editor" checked>
+            <label for="tab-editor">Listing Editor</label>
+            <input type="radio" name="tab" id="tab-admin">
+            <label for="tab-admin">Business Dashboard</label>
+            <input type="radio" name="tab" id="tab-mobile">
+            <label for="tab-mobile">Mobile Camera</label>
+
+            <div class="tab-panels">
+                <!-- Editor Panel (default shown) -->
+                <div class="panel-editor tab-content">
+                    <div class="admin-showcase-window" style="max-width:900px;margin:0 auto;">
+                        <div class="window-bar">
+                            <span class="window-dot r"></span>
+                            <span class="window-dot y"></span>
+                            <span class="window-dot g"></span>
+                            <span class="window-title">myBay &mdash; Dashboard</span>
+                        </div>
+                        <div style="padding:24px; display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px;">
+                            <div style="padding:16px; border-radius:10px; border:1px solid var(--border); background:var(--bg-card); text-align:center;">
+                                <div style="font-size:1.8rem; font-weight:800; color:var(--accent);">12</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Listed Today</div>
+                            </div>
+                            <div style="padding:16px; border-radius:10px; border:1px solid var(--border); background:var(--bg-card); text-align:center;">
+                                <div style="font-size:1.8rem; font-weight:800; color:var(--green);">3</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Sold Today</div>
+                            </div>
+                            <div style="padding:16px; border-radius:10px; border:1px solid var(--border); background:var(--bg-card); text-align:center;">
+                                <div style="font-size:1.8rem; font-weight:800; color:var(--orange);">$247</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Revenue</div>
+                            </div>
+                            <div style="padding:16px; border-radius:10px; border:1px solid var(--border); background:var(--bg-card); text-align:center;">
+                                <div style="font-size:1.8rem; font-weight:800; color:var(--purple);">48m</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Time Saved</div>
+                            </div>
+                        </div>
+                        <div style="padding:0 24px 24px; display:grid; gap:8px;">
+                            <div style="font-size:0.8rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">Recent Listings</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); font-size:0.82rem;">
+                                <span style="color:var(--text);">Vintage Polaroid Camera</span>
+                                <span style="color:var(--green); font-weight:600;">$45.00 &middot; Published</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); font-size:0.82rem;">
+                                <span style="color:var(--text);">Nike Air Max 90 Size 10</span>
+                                <span style="color:var(--green); font-weight:600;">$89.99 &middot; Published</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card); font-size:0.82rem;">
+                                <span style="color:var(--text);">KitchenAid Classic Stand Mixer</span>
+                                <span style="color:var(--accent); font-weight:600;">$120.00 &middot; Draft</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Panel -->
+                <div class="panel-admin tab-content">
+                    <div class="admin-showcase-window">
+                        <div class="window-bar">
+                            <span class="window-dot r"></span>
+                            <span class="window-dot y"></span>
+                            <span class="window-dot g"></span>
+                            <span class="window-title">myBay &mdash; Admin Dashboard</span>
+                        </div>
+                        <div class="admin-mock-body">
+                            <div class="admin-mock-tabs">
+                                <div class="admin-mock-tab active">AI Assistant</div>
+                                <div class="admin-mock-tab">Business Info</div>
+                                <div class="admin-mock-tab">Expenses</div>
+                                <div class="admin-mock-tab">Income</div>
+                                <div class="admin-mock-tab">Mileage</div>
+                                <div class="admin-mock-tab">Taxes</div>
+                                <div class="admin-mock-tab">Export</div>
+                            </div>
+                            <div class="admin-mock-chat">
+                                <div class="chat-bubble chat-user">spent $25 at goodwill on inventory, drove 12 miles</div>
+                                <div class="chat-bubble chat-bot">
+                                    Got it! Logged:<br><br>
+                                    <div class="chat-entry" style="margin-top:6px;">&#10003; Expense: $25.00 (inventory) &mdash; Goodwill</div>
+                                    <div class="chat-entry" style="margin-top:6px;">&#10003; Mileage: 12.0 mi &mdash; $8.40 deduction</div>
+                                </div>
+                                <div class="chat-bubble chat-user">sold a vintage camera for $85 on ebay, $11 in fees</div>
+                                <div class="chat-bubble chat-bot">
+                                    Logged:<br><br>
+                                    <div class="chat-entry" style="margin-top:6px;">&#10003; Income: $85.00 (eBay) &mdash; $11.00 fees &mdash; $74.00 net</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Panel -->
+                <div class="panel-mobile tab-content">
+                    <div class="phone-frame">
+                        <div class="phone-notch"></div>
+                        <div class="phone-screen">
+                            <div class="phone-header">
+                                <h4>myBay Camera</h4>
+                            </div>
+                            <div class="phone-camera-area">
+                                <div class="phone-viewfinder">&#128247;</div>
+                                <div class="phone-shutter"><div class="phone-shutter-inner"></div></div>
+                                <div class="phone-thumbs">
+                                    <div class="phone-thumb">&#128247;</div>
+                                    <div class="phone-thumb">&#128247;</div>
+                                    <div class="phone-thumb">+</div>
+                                </div>
+                                <div style="font-size:0.72rem; color:var(--text-muted); text-align:center;">Take 1-3 photos &middot; Auto-uploads to desktop</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Business Backend -->
+<section class="section" id="business">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Business Backend</div>
+            <h2 class="section-title">Run your sole proprietorship from one app</h2>
+            <p class="section-desc">The Admin dashboard turns myBay into a full business management tool. Track everything you need for tax time.</p>
+        </div>
+        <div class="biz-grid">
+            <div class="biz-card">
+                <h3>&#128172; AI Business Assistant</h3>
+                <p>Type plain English like "spent $25 at goodwill on inventory, drove 12 miles" and the AI logs expenses, income, and mileage automatically. One message can create multiple entries.</p>
+            </div>
+            <div class="biz-card">
+                <h3>&#128184; Expense Tracking</h3>
+                <p>Log expenses by category (inventory, shipping, eBay fees, supplies, storage, office). Attach receipt images. View YTD totals by category.</p>
+            </div>
+            <div class="biz-card">
+                <h3>&#128181; Income Tracking</h3>
+                <p>Manual entry or one-click import of sold eBay listings. Tracks platform fees, shipping costs, and sales tax separately. Calculates net automatically.</p>
+            </div>
+            <div class="biz-card">
+                <h3>&#128663; Mileage Tracker</h3>
+                <p>Log trips with IRS standard rate. Supports sourcing runs, post office trips, supply pickups. Auto-calculates deduction per trip and YTD totals.</p>
+            </div>
+            <div class="biz-card">
+                <h3>&#128203; Tax Summary</h3>
+                <p>Schedule C profit &amp; loss, home office deduction, self-employment tax estimate, quarterly estimated taxes (Federal + State), and 1099-K reconciliation.</p>
+            </div>
+            <div class="biz-card">
+                <h3>&#128230; CSV Export</h3>
+                <p>Export by date range. Individual CSVs or a bundled ZIP file with receipt images included. Hand it to your accountant or import into tax software.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Setup -->
+<section class="section" id="setup" style="padding-bottom:40px;">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Getting Started</div>
+            <h2 class="section-title">Up and running in 5 minutes</h2>
+            <p class="section-desc">Three things to set up, then you're listing.</p>
+        </div>
+        <div class="setup-grid">
+            <div class="setup-card">
+                <div class="setup-step-num">1</div>
+                <h3>Set Up AI (Free or Paid)</h3>
+                <p><strong>Free option:</strong> Install Ollama and pull a vision model &mdash; zero accounts, zero cost.<br><strong>Paid option:</strong> Get an OpenAI API key for best quality + web search pricing (~$0.01-0.05/listing).</p>
+                <code>ollama pull qwen3.5:2b</code>
+            </div>
+            <div class="setup-card">
+                <div class="setup-step-num">2</div>
+                <h3>Create an eBay App</h3>
+                <p>Register at developer.ebay.com, create an application, and note your Client ID, Client Secret, and RuName. Set redirect URL to localhost:8000.</p>
+                <code>EBAY_APP_ID=your-app-id</code>
+            </div>
+            <div class="setup-card">
+                <div class="setup-step-num">3</div>
+                <h3>Clone &amp; Install</h3>
+                <p>Clone the repo and run the install script. The setup wizard walks you through connecting your eBay seller account via OAuth. Start listing immediately.</p>
+                <code>./install.sh</code>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Requirements -->
+<section class="section" style="padding-top:20px;">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Requirements</div>
+            <h2 class="section-title">What you need</h2>
+        </div>
+        <table class="req-table">
+            <thead>
+                <tr>
+                    <th>Requirement</th>
+                    <th>Details</th>
+                    <th>Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Python 3.10+</td>
+                    <td>Required. Install from python.org or via your package manager</td>
+                    <td>Free</td>
+                </tr>
+                <tr>
+                    <td>Operating System</td>
+                    <td>macOS 12+, Linux, or Windows via WSL</td>
+                    <td>&mdash;</td>
+                </tr>
+                <tr>
+                    <td>AI Backend</td>
+                    <td>Ollama (local, free) or OpenAI (cloud, best quality)</td>
+                    <td>Free &ndash; $0.05/listing</td>
+                </tr>
+                <tr>
+                    <td>eBay Seller Account</td>
+                    <td>Regular eBay account with selling enabled</td>
+                    <td>Free</td>
+                </tr>
+                <tr>
+                    <td>eBay Developer Account</td>
+                    <td>For API access. Individual tier (5,000 calls/day)</td>
+                    <td>Free</td>
+                </tr>
+                <tr>
+                    <td>Same WiFi Network</td>
+                    <td>Phone and computer for camera features (or use ngrok for remote)</td>
+                    <td>&mdash;</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">FAQ</div>
+            <h2 class="section-title">Common questions</h2>
+        </div>
+        <div class="faq-grid">
+            <div class="faq-item">
+                <h3>How much does it cost to use?</h3>
+                <p>myBay is free and open source. You pay only for OpenAI API usage (~$0.01-0.05 per listing) and standard eBay seller fees. Or use Ollama for completely free local AI. No subscription, no hidden costs.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Is my data safe?</h3>
+                <p>Everything runs locally on your machine. Your API keys, eBay tokens, and business data are stored locally and never leave your computer. The app is open source so you can verify this yourself.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What AI model does it use?</h3>
+                <p>You have two options: <strong>OpenAI</strong> (cloud) for best quality with vision and web search capabilities, or <strong>Ollama</strong> (local, free) for fully private AI that runs on your machine with no API costs. You can switch between them at any time.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Does it work with eBay Sandbox?</h3>
+                <p>Yes. Start with Sandbox to test your setup, then switch to Production when you're ready to list real items. The app supports both environments.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Can I use it without a phone?</h3>
+                <p>Yes. You can drag and drop images directly into the queue folder. The phone camera is just the fastest way to get photos in.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What if I'm offline?</h3>
+                <p>Listings queue locally and auto-publish when your connection comes back. You'll never lose work due to a network interruption.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Get Started CTA -->
+<section class="cta-section" id="download">
+    <div class="container">
+        <div class="cta-box">
+            <h2>Ready to list faster?</h2>
+            <p>Clone myBay and start turning photos into eBay listings in under 60 seconds.</p>
+            <div class="download-grid">
+                <a class="dl-btn dl-btn-active" href="https://github.com/lalomorales22/myBay" target="_blank" rel="noopener">
+                    <span>Get Started on GitHub</span>
+                    <span class="dl-pill live">FREE</span>
+                </a>
+            </div>
+            <div class="install-block">
+                <code>
+                    <span class="prompt">$ </span><span class="cmd">git clone https://github.com/lalomorales22/myBay.git</span><br>
+                    <span class="prompt">$ </span><span class="cmd">cd myBay</span><br>
+                    <span class="prompt">$ </span><span class="cmd">./install.sh</span>
+                </code>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0;">Works on macOS, Linux, and WSL. Requires Python 3.10+</p>
+        </div>
+    </div>
+</section>
+
+<!-- Community -->
+<section class="community-section" id="community">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">Community</div>
+            <h2 class="section-title">Get involved</h2>
+            <p class="section-desc">myBay is open source and community-driven. We'd love your help making it better.</p>
+        </div>
+        <div class="community-grid">
+            <div class="community-card">
+                <h3>Report a Bug</h3>
+                <p>Found something that's not working right? Open an issue on GitHub and we'll look into it.</p>
+                <a href="https://github.com/lalomorales22/myBay/issues/new?template=bug_report.md" target="_blank" rel="noopener">Open a Bug Report &rarr;</a>
+            </div>
+            <div class="community-card">
+                <h3>Request a Feature</h3>
+                <p>Have an idea that would make myBay better for sellers? We're all ears.</p>
+                <a href="https://github.com/lalomorales22/myBay/issues/new?template=feature_request.md" target="_blank" rel="noopener">Submit a Feature Request &rarr;</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <div class="nav-logo">m</div>
+                <span>myBay</span>
+            </div>
+            <p class="footer-note">Built for real sellers. Focused on speed, reliability, and clean listings.</p>
+            <ul class="footer-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#setup">Setup</a></li>
+                <li><a href="#community">Community</a></li>
+                <li><a href="https://github.com/lalomorales22/myBay" target="_blank" rel="noopener">GitHub</a></li>
+            </ul>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
