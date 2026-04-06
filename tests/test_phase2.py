@@ -32,69 +32,69 @@ def print_result(success: bool, message: str):
 def test_imports():
     """Test that all Phase 2 modules import correctly."""
     print_header("Testing Imports")
-    
-    all_passed = True
-    
+
+    failures = []
+
     # Test FastAPI
     try:
         from fastapi import FastAPI
         print_result(True, "FastAPI imported")
     except ImportError as e:
         print_result(False, f"FastAPI import failed: {e}")
-        all_passed = False
-    
+        failures.append(str(e))
+
     # Test uvicorn
     try:
         import uvicorn
         print_result(True, "uvicorn imported")
     except ImportError as e:
         print_result(False, f"uvicorn import failed: {e}")
-        all_passed = False
-    
+        failures.append(str(e))
+
     # Test watchdog
     try:
         from watchdog.observers import Observer
         print_result(True, "watchdog imported")
     except ImportError as e:
         print_result(False, f"watchdog import failed: {e}")
-        all_passed = False
-    
+        failures.append(str(e))
+
     # Test qrcode
     try:
         import qrcode
         print_result(True, "qrcode imported")
     except ImportError as e:
         print_result(False, f"qrcode import failed: {e}")
-        all_passed = False
-    
+        failures.append(str(e))
+
     # Test websockets
     try:
         import websockets
         print_result(True, "websockets imported")
     except ImportError as e:
         print_result(False, f"websockets import failed: {e}")
-        all_passed = False
-    
-    return all_passed
+        failures.append(str(e))
+
+    assert not failures, f"Import failures: {failures}"
 
 
 def test_server_module():
     """Test the server module."""
     print_header("Testing Server Module")
-    
-    all_passed = True
-    
+
+    failures = []
+
     try:
         from server.main import app, get_local_ip, QUEUE_DIR
         print_result(True, "Server module imported")
-        
+
         # Test local IP detection
         ip = get_local_ip()
         print_result(True, f"Local IP detected: {ip}")
-        
+
         # Test queue directory
         print_result(QUEUE_DIR.exists(), f"Queue directory exists: {QUEUE_DIR}")
-        
+
         # Test app routes
         routes = [r.path for r in app.routes]
         required_routes = ["/", "/camera", "/upload", "/health", "/ws", "/qr"]
@@ -103,105 +103,97 @@ def test_server_module():
                 print_result(True, f"Route {route} registered")
             else:
                 print_result(False, f"Route {route} missing")
-                all_passed = False
-        
+                failures.append(f"Route {route} missing")
+
     except Exception as e:
         print_result(False, f"Server module test failed: {e}")
-        all_passed = False
-    
-    return all_passed
+        failures.append(str(e))
+
+    assert not failures, f"Server module failures: {failures}"
 
 
 def test_qr_code():
     """Test QR code generation."""
     print_header("Testing QR Code Generation")
-    
-    all_passed = True
-    
+
     try:
         from core.qr_code import generate_qr_code, get_camera_url, save_qr_code
-        
+
         # Test camera URL
         url = get_camera_url()
         print_result("http://" in url, f"Camera URL: {url}")
-        
+
         # Test QR generation
         img = generate_qr_code()
         print_result(img is not None, f"QR code generated: {img.size}")
-        
+
         # Test saving
         output_dir = Path(__file__).parent / "samples"
         output_dir.mkdir(exist_ok=True)
         qr_path = output_dir / "test_qr.png"
         save_qr_code(qr_path)
         print_result(qr_path.exists(), f"QR code saved: {qr_path}")
-        
+
     except Exception as e:
         print_result(False, f"QR code test failed: {e}")
-        all_passed = False
-    
-    return all_passed
+        assert False, f"QR code test failed: {e}"
 
 
 def test_watcher():
     """Test the file watcher module."""
     print_header("Testing File Watcher")
-    
-    all_passed = True
-    
+
     try:
         from core.watcher import QueueWatcher, ImageBatch
-        
+
         # Create watcher
         test_queue = Path(__file__).parent / "test_queue"
         test_queue.mkdir(exist_ok=True)
-        
+
         watcher = QueueWatcher(test_queue)
         print_result(True, f"QueueWatcher created: {watcher.queue_dir}")
-        
+
         # Test callbacks
         received_batches = []
-        
+
         def on_batch(batch):
             received_batches.append(batch)
-        
+
         watcher.on_images_received = on_batch
         print_result(True, "Callbacks configured")
-        
+
         # Start watcher
         watcher.start()
         print_result(True, "Watcher started")
-        
+
         # Stop watcher
         time.sleep(0.5)
         watcher.stop()
         print_result(True, "Watcher stopped")
-        
+
         # Cleanup
         import shutil
         if test_queue.exists():
             shutil.rmtree(test_queue)
-        
+
     except Exception as e:
         print_result(False, f"Watcher test failed: {e}")
-        all_passed = False
-    
-    return all_passed
+        assert False, f"Watcher test failed: {e}"
 
 
 def test_camera_html():
     """Test that camera HTML template exists and is valid."""
     print_header("Testing Camera Template")
-    
-    all_passed = True
-    
+
+    failures = []
+
     template_path = Path(__file__).parent.parent / "server" / "templates" / "camera.html"
-    
+
     if template_path.exists():
         print_result(True, f"Template exists: {template_path.name}")
-        
+
         content = template_path.read_text()
-        
+
         # Check for required elements
         checks = [
             ("<html", "HTML document"),
@@ -211,38 +203,38 @@ def test_camera_html():
             ("WebSocket", "WebSocket support"),
             ("/upload", "Upload endpoint reference"),
         ]
-        
+
         for pattern, description in checks:
             if pattern in content:
                 print_result(True, f"Contains: {description}")
             else:
                 print_result(False, f"Missing: {description}")
-                all_passed = False
-        
+                failures.append(f"Missing: {description}")
+
         print_result(True, f"Template size: {len(content):,} bytes")
-        
+
     else:
         print_result(False, f"Template not found: {template_path}")
-        all_passed = False
-    
-    return all_passed
+        failures.append(f"Template not found: {template_path}")
+
+    assert not failures, f"Camera template failures: {failures}"
 
 
 def test_server_startup():
     """Test that the server can start (brief startup test)."""
     print_header("Testing Server Startup")
-    
-    all_passed = True
-    
+
+    failures = []
+
     try:
         import httpx
         from server.main import app
-        
+
         # Use TestClient for quick startup test
         from fastapi.testclient import TestClient
-        
+
         client = TestClient(app)
-        
+
         # Test health endpoint
         response = client.get("/health")
         if response.status_code == 200:
@@ -251,8 +243,8 @@ def test_server_startup():
             print_result(True, f"Local IP: {data.get('local_ip')}")
         else:
             print_result(False, f"Health check failed: {response.status_code}")
-            all_passed = False
-        
+            failures.append(f"Health check failed: {response.status_code}")
+
         # Test info endpoint
         response = client.get("/info")
         if response.status_code == 200:
@@ -260,29 +252,29 @@ def test_server_startup():
             print_result(True, f"Camera URL: {data.get('camera_url')}")
         else:
             print_result(False, f"Info endpoint failed: {response.status_code}")
-            all_passed = False
-        
+            failures.append(f"Info endpoint failed: {response.status_code}")
+
         # Test camera page
         response = client.get("/camera")
         if response.status_code == 200:
             print_result(True, f"Camera page served: {len(response.text):,} bytes")
         else:
             print_result(False, f"Camera page failed: {response.status_code}")
-            all_passed = False
-        
+            failures.append(f"Camera page failed: {response.status_code}")
+
         # Test QR code
         response = client.get("/qr")
         if response.status_code == 200:
             print_result(True, f"QR code generated: {len(response.content):,} bytes")
         else:
             print_result(False, f"QR code failed: {response.status_code}")
-            all_passed = False
-        
+            failures.append(f"QR code failed: {response.status_code}")
+
     except Exception as e:
         print_result(False, f"Server startup test failed: {e}")
-        all_passed = False
-    
-    return all_passed
+        failures.append(str(e))
+
+    assert not failures, f"Server startup failures: {failures}"
 
 
 def run_all_tests():
@@ -292,24 +284,48 @@ def run_all_tests():
     print("🔬 "*20)
     
     results = []
-    
+
     # Test 1: Imports
-    results.append(("Imports", test_imports()))
-    
+    try:
+        test_imports()
+        results.append(("Imports", True))
+    except (AssertionError, Exception):
+        results.append(("Imports", False))
+
     # Test 2: Server module
-    results.append(("Server Module", test_server_module()))
-    
+    try:
+        test_server_module()
+        results.append(("Server Module", True))
+    except (AssertionError, Exception):
+        results.append(("Server Module", False))
+
     # Test 3: QR Code
-    results.append(("QR Code Generation", test_qr_code()))
-    
+    try:
+        test_qr_code()
+        results.append(("QR Code Generation", True))
+    except (AssertionError, Exception):
+        results.append(("QR Code Generation", False))
+
     # Test 4: File Watcher
-    results.append(("File Watcher", test_watcher()))
-    
+    try:
+        test_watcher()
+        results.append(("File Watcher", True))
+    except (AssertionError, Exception):
+        results.append(("File Watcher", False))
+
     # Test 5: Camera Template
-    results.append(("Camera Template", test_camera_html()))
-    
+    try:
+        test_camera_html()
+        results.append(("Camera Template", True))
+    except (AssertionError, Exception):
+        results.append(("Camera Template", False))
+
     # Test 6: Server Startup
-    results.append(("Server Startup", test_server_startup()))
+    try:
+        test_server_startup()
+        results.append(("Server Startup", True))
+    except (AssertionError, Exception):
+        results.append(("Server Startup", False))
     
     # Summary
     print_header("TEST SUMMARY")

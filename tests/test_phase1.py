@@ -11,6 +11,7 @@ Usage:
 
 import sys
 import json
+import pytest
 from pathlib import Path
 
 # Add parent directory to path for imports
@@ -74,9 +75,7 @@ def test_openai_connection():
     analyzer = ProductAnalyzer()
 
     if not analyzer.api_key:
-        print_result(False, "OPENAI_API_KEY not set")
-        print("   Add OPENAI_API_KEY to environment or .env")
-        return False
+        pytest.skip("OPENAI_API_KEY not set")
 
     if analyzer.check_openai_status():
         print_result(True, f"OpenAI API reachable (model: {analyzer.model})")
@@ -84,11 +83,9 @@ def test_openai_connection():
         if models:
             preview = ", ".join(models[:5])
             print(f"   Sample available models: {preview}")
-        return True
+        return
 
-    print_result(False, "OpenAI API check failed")
-    print("   Verify API key, billing, model access, and network connectivity")
-    return False
+    pytest.skip("OpenAI API not reachable")
 
 
 def test_image_utils():
@@ -100,8 +97,7 @@ def test_image_utils():
         from PIL import Image
         print_result(True, "Pillow (PIL) is installed")
     except ImportError:
-        print_result(False, "Pillow not installed - run: pip install Pillow")
-        return False
+        pytest.skip("Pillow not installed")
     
     # Check rembg
     if REMBG_AVAILABLE:
@@ -121,7 +117,7 @@ def test_image_utils():
             print_result(True, f"Created sample image: {sample_path}")
         else:
             print_result(False, "Could not create sample image")
-            return True  # Not a critical failure
+            return  # Not a critical failure
     
     # Test image info
     try:
@@ -154,8 +150,6 @@ def test_image_utils():
             print_result(True, f"remove_background works: {result.name}")
         except Exception as e:
             print_result(False, f"remove_background failed: {e}")
-    
-    return True
 
 
 def test_vision_analysis(image_path: Path = None):
@@ -169,16 +163,13 @@ def test_vision_analysis(image_path: Path = None):
             print("No test image available. Creating one...")
             sample_path.parent.mkdir(exist_ok=True)
             if not create_sample_image(sample_path):
-                print_result(False, "Cannot create test image")
-                return False
+                pytest.skip("Cannot create test image")
         image_path = sample_path
     
     # Check if OpenAI is ready
     analyzer = ProductAnalyzer()
     if not analyzer.check_openai_status():
-        print_result(False, "OpenAI not ready - skipping vision test")
-        print("   Set OPENAI_API_KEY and verify model access")
-        return False
+        pytest.skip("OpenAI not ready")
     
     print(f"Analyzing image: {image_path}")
     print("This may take 10-30 seconds...")
@@ -204,12 +195,10 @@ def test_vision_analysis(image_path: Path = None):
         # Output as JSON too
         print("\nJSON Output:")
         print(json.dumps(result.to_dict(), indent=2))
-        
-        return True
-        
+
     except Exception as e:
         print_result(False, f"Vision analysis failed: {e}")
-        return False
+        assert False, f"Vision analysis failed: {e}"
 
 
 def run_all_tests():
@@ -219,16 +208,34 @@ def run_all_tests():
     print("🔬 "*20)
     
     results = []
-    
+
     # Test 1: OpenAI connection
-    results.append(("OpenAI Connection", test_openai_connection()))
-    
+    try:
+        test_openai_connection()
+        results.append(("OpenAI Connection", True))
+    except pytest.skip.Exception:
+        results.append(("OpenAI Connection", None))
+    except (AssertionError, Exception):
+        results.append(("OpenAI Connection", False))
+
     # Test 2: Image utilities
-    results.append(("Image Utilities", test_image_utils()))
-    
+    try:
+        test_image_utils()
+        results.append(("Image Utilities", True))
+    except pytest.skip.Exception:
+        results.append(("Image Utilities", None))
+    except (AssertionError, Exception):
+        results.append(("Image Utilities", False))
+
     # Test 3: Vision analysis (only if OpenAI is available)
     if results[0][1]:
-        results.append(("Vision Analysis", test_vision_analysis()))
+        try:
+            test_vision_analysis()
+            results.append(("Vision Analysis", True))
+        except pytest.skip.Exception:
+            results.append(("Vision Analysis", None))
+        except (AssertionError, Exception):
+            results.append(("Vision Analysis", False))
     else:
         results.append(("Vision Analysis", None))  # Skipped
     

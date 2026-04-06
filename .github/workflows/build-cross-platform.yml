@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller
+          pip install -r requirements-dev.txt
 
       - name: Import macOS signing certificate (optional)
         if: ${{ secrets.MACOS_CERT_P12_BASE64 != '' }}
@@ -94,7 +94,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller
+          pip install -r requirements-dev.txt
 
       - name: Build .exe
         run: python build_windows.py --clean
@@ -145,7 +145,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller
+          pip install -r requirements-dev.txt
 
       - name: Build .AppImage
         run: python build_linux.py --clean

@@ -207,7 +207,7 @@ class OllamaAnalyzer:
             "stream": False,
             "options": {
                 "temperature": 0.3,
-                "num_predict": 1200,
+                "num_predict": 2048,
             },
         }
 
@@ -255,135 +255,13 @@ class OllamaAnalyzer:
 
     def _parse_json_response(self, text: str) -> dict:
         """Parse JSON from Ollama's response, handling common LLM quirks."""
-        cleaned = text.strip()
-
-        # Remove markdown code blocks
-        if cleaned.startswith("```"):
-            lines = cleaned.split("\n")
-            start_idx = 1
-            end_idx = len(lines)
-            for i, line in enumerate(lines[1:], 1):
-                if line.strip() == "```":
-                    end_idx = i
-                    break
-            cleaned = "\n".join(lines[start_idx:end_idx])
-
-        # Extract first JSON object
-        json_match = re.search(r"\{[\s\S]*\}", cleaned)
-        if json_match:
-            cleaned = json_match.group()
-
-        try:
-            return json.loads(cleaned)
-        except json.JSONDecodeError:
-            pass
-
-        # Attempt repair: trailing commas, unescaped newlines
-        repaired = cleaned
-        repaired = re.sub(r",\s*}", "}", repaired)
-        repaired = re.sub(r",\s*]", "]", repaired)
-        repaired = repaired.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
-        try:
-            return json.loads(repaired)
-        except json.JSONDecodeError:
-            pass
-
-        # Last resort: regex key extraction
-        try:
-            title = re.search(r'"title"\s*:\s*"([^"]*)"', cleaned)
-            desc = re.search(r'"description"\s*:\s*"((?:[^"\\]|\\.)*)"', cleaned)
-            price = re.search(r'"suggested_price_usd"\s*:\s*([0-9.]+)', cleaned)
-            conf = re.search(r'"confidence_score"\s*:\s*([0-9.]+)', cleaned)
-            cond = re.search(r'"condition"\s*:\s*"([^"]*)"', cleaned)
-            if title:
-                return {
-                    "title": title.group(1)[:80],
-                    "brand": None,
-                    "model": None,
-                    "size": None,
-                    "category_keywords": ["unknown"],
-                    "condition": cond.group(1) if cond else "GOOD",
-                    "color": None,
-                    "material": None,
-                    "description": desc.group(1)[:2000] if desc else "Parsed from partial AI response.",
-                    "suggested_price_usd": float(price.group(1)) if price else 0,
-                    "confidence_score": float(conf.group(1)) if conf else 0.3,
-                }
-        except Exception:
-            pass
-
-        return {
-            "title": "Unable to analyze image",
-            "brand": None,
-            "model": None,
-            "size": None,
-            "category_keywords": ["unknown"],
-            "condition": "GOOD",
-            "color": None,
-            "material": None,
-            "description": "Ollama response parsing failed. Please try again.",
-            "suggested_price_usd": 0,
-            "confidence_score": 0.1,
-        }
+        from core.parsing import parse_json_response
+        return parse_json_response(text)
 
     def _validate_product_data(self, data: dict) -> dict:
-        """Validate and normalize product data — mirrors ProductAnalyzer logic."""
-        title = str(data.get("title", "Unknown Item")).strip()[:80]
-        if not title:
-            title = "Unknown Item"
-
-        valid_conditions = {"NEW", "LIKE_NEW", "VERY_GOOD", "GOOD", "ACCEPTABLE"}
-        condition = str(data.get("condition", "GOOD")).upper().replace(" ", "_")
-        if condition not in valid_conditions:
-            condition = "GOOD"
-
-        keywords = data.get("category_keywords", [])
-        if isinstance(keywords, str):
-            keywords = [k.strip() for k in keywords.split(",")]
-        keywords = [str(k).strip() for k in keywords if str(k).strip()][:5]
-        if not keywords:
-            keywords = ["miscellaneous"]
-
-        try:
-            price = float(data.get("suggested_price_usd", 0))
-            price = max(0.0, min(price, 100000.0))
-        except (TypeError, ValueError):
-            price = 0.0
-
-        try:
-            confidence = float(data.get("confidence_score", 0.5))
-            confidence = max(0.0, min(confidence, 1.0))
-        except (TypeError, ValueError):
-            confidence = 0.5
-
-        def clean_optional(value: object, max_len: int = 120) -> Optional[str]:
-            if value is None:
-                return None
-            text = str(value).strip()
-            return text[:max_len] if text else None
-
-        description = str(data.get("description", "")).strip()[:2000]
-        if not description:
-            parts = ["Item analyzed from photos."]
-            if clean_optional(data.get("brand")):
-                parts.append(f"Brand appears to be {clean_optional(data.get('brand'))}.")
-            if clean_optional(data.get("model")):
-                parts.append(f"Model/details: {clean_optional(data.get('model'))}.")
-            description = " ".join(parts)[:2000]
-
-        return {
-            "title": title,
-            "brand": clean_optional(data.get("brand")),
-            "model": clean_optional(data.get("model")),
-            "size": clean_optional(data.get("size")),
-            "category_keywords": keywords,
-            "condition": condition,
-            "color": clean_optional(data.get("color")),
-            "material": clean_optional(data.get("material")),
-            "description": description,
-            "suggested_price_usd": round(price, 2),
-            "confidence_score": round(confidence, 2),
-        }
+        """Validate and normalize product data."""
+        from core.parsing import validate_product_data
+        return validate_product_data(data)
 
 
 if __name__ == "__main__":

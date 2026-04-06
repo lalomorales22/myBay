@@ -99,16 +99,19 @@ def start_watcher_with_db():
 def start_server_thread(host: str, port: int):
     """Start the server in a background thread."""
     import uvicorn
-    from server.main import app
-    
+    import server.main as server_module
+
+    # Tell the server module which port we're actually using
+    server_module.SERVER_PORT = port
+
     config = uvicorn.Config(
-        app,
+        server_module.app,
         host=host,
         port=port,
         log_level="warning"  # Quieter for GUI mode
     )
     server = uvicorn.Server(config)
-    
+
     thread = threading.Thread(target=server.run, daemon=True)
     thread.start()
     return thread

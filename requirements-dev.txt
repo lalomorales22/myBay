@@ -1,0 +1,10 @@
+# myBay - Development & Build Requirements
+# Install with: pip install -r requirements-dev.txt
+
+-r requirements.txt    # Include runtime dependencies
+
+# Packaging
+pyinstaller==6.18.0    # macOS/Windows app bundling
+
+# Testing
+pytest==9.0.2          # Testing framework

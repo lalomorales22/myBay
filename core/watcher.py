@@ -18,9 +18,6 @@ from collections import deque
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileCreatedEvent
 
-# Import vision module
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.vision import ProductData
 from core.analyzer_factory import get_analyzer
 from core.ollama import OllamaAnalyzer
@@ -199,12 +196,10 @@ class QueueHandler(FileSystemEventHandler):
     def _enrich_price_from_ebay(self, product_data: ProductData) -> ProductData:
         """Use eBay Browse API to get market pricing when Ollama can't web-search."""
         try:
-            import asyncio
-            from ebay.pricing import PricingIntelligence
+            from ebay.pricing import get_market_price_sync
 
-            pricing = PricingIntelligence()
-            analysis = asyncio.run(
-                pricing.analyze(product_data.title, condition=product_data.condition)
+            analysis = get_market_price_sync(
+                product_data.title, condition=product_data.condition
             )
             if analysis and analysis.suggested_price > 0:
                 product_data.suggested_price_usd = round(analysis.suggested_price, 2)

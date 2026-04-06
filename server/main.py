@@ -14,8 +14,8 @@ Or: uvicorn server.main:app --host 0.0.0.0 --port 8000
 import asyncio
 import json
 import uuid
-import socket
 from datetime import datetime
+from html import escape as html_escape
 from pathlib import Path
 from typing import Optional
 
@@ -34,6 +34,10 @@ QUEUE_DIR = get_queue_dir()
 
 STATIC_DIR.mkdir(exist_ok=True)
 
+# Configured server port — set by run_server() or the run.py entry point.
+# Defaults to 8000 but updated at startup so all endpoints return correct URLs.
+SERVER_PORT: int = 8000
+
 # Create the FastAPI app
 app = FastAPI(
     title="myBay - Camera Server",
@@ -43,11 +47,12 @@ app = FastAPI(
 
 # Enable CORS for local network access.
 # allow_origins=["*"] is required because the phone IP is dynamic on the LAN.
-# This is acceptable since the server only runs on the local network.
+# allow_credentials is False because wildcard origins + credentials is forbidden
+# by the CORS spec, and we don't need cookie-based auth for the camera page.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["GET", "POST", "DELETE"],  # Only the methods we actually use
     allow_headers=["*"],
 )
@@ -99,15 +104,8 @@ manager = ConnectionManager()
 
 def get_local_ip() -> str:
     """Get the local IP address for network access."""
-    try:
-        # Create a socket to determine the local IP
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except Exception:
-        return "127.0.0.1"
+    from core.qr_code import get_local_ip as _get_local_ip
+    return _get_local_ip()
 
 
 def generate_image_id() -> str:
@@ -164,10 +162,10 @@ async def server_info():
     local_ip = get_local_ip()
     return {
         "local_ip": local_ip,
-        "port": 8000,
-        "camera_url": f"http://{local_ip}:8000/camera",
-        "upload_url": f"http://{local_ip}:8000/upload",
-        "websocket_url": f"ws://{local_ip}:8000/ws",
+        "port": SERVER_PORT,
+        "camera_url": f"http://{local_ip}:{SERVER_PORT}/camera",
+        "upload_url": f"http://{local_ip}:{SERVER_PORT}/upload",
+        "websocket_url": f"ws://{local_ip}:{SERVER_PORT}/ws",
     }
 
 
@@ -199,23 +197,33 @@ async def upload_images(files: list[UploadFile] = File(...)):
         filename = f"{image_id}{ext}"
         filepath = QUEUE_DIR / filename
 
-        # Save the file
+        # Save the file (stream in chunks to avoid loading huge files into memory)
         try:
-            content = await file.read()
-            if len(content) > MAX_FILE_SIZE:
-                print(f"⚠️ Rejected {file.filename}: {len(content):,} bytes exceeds 50 MB limit")
-                continue
+            CHUNK_SIZE = 1024 * 1024  # 1 MB chunks
+            total_size = 0
             with open(filepath, "wb") as f:
-                f.write(content)
-            
+                while True:
+                    chunk = await file.read(CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    total_size += len(chunk)
+                    if total_size > MAX_FILE_SIZE:
+                        break
+                    f.write(chunk)
+
+            if total_size > MAX_FILE_SIZE:
+                filepath.unlink(missing_ok=True)
+                print(f"⚠️ Rejected {file.filename}: exceeds 50 MB limit")
+                continue
+
             uploaded.append({
                 "image_id": image_id,
                 "filename": filename,
                 "path": str(filepath),
-                "size_bytes": len(content),
+                "size_bytes": total_size,
             })
-            
-            print(f"📸 Saved: {filename} ({len(content):,} bytes)")
+
+            print(f"📸 Saved: {filename} ({total_size:,} bytes)")
             
         except Exception as e:
             print(f"❌ Error saving {file.filename}: {e}")
@@ -265,28 +273,39 @@ async def list_queue():
     }
 
 
+def _safe_queue_path(filename: str) -> Optional[Path]:
+    """Resolve a filename inside QUEUE_DIR, rejecting path traversal attempts."""
+    if "/" in filename or "\\" in filename or filename in (".", ".."):
+        return None
+    filepath = (QUEUE_DIR / filename).resolve()
+    # Ensure the resolved path is still inside QUEUE_DIR
+    if not str(filepath).startswith(str(QUEUE_DIR.resolve())):
+        return None
+    return filepath
+
+
 @app.delete("/queue/{filename}")
 async def delete_from_queue(filename: str):
     """Delete an image from the queue."""
-    filepath = QUEUE_DIR / filename
-    if filepath.exists() and filepath.parent == QUEUE_DIR:
+    filepath = _safe_queue_path(filename)
+    if filepath and filepath.exists():
         filepath.unlink()
         return {"success": True, "deleted": filename}
     return JSONResponse(
         status_code=404,
-        content={"error": f"File not found: {filename}"}
+        content={"error": "File not found"}
     )
 
 
 @app.get("/queue/{filename}")
 async def get_queue_image(filename: str):
     """Serve an image from the queue."""
-    filepath = QUEUE_DIR / filename
-    if filepath.exists() and filepath.parent == QUEUE_DIR:
+    filepath = _safe_queue_path(filename)
+    if filepath and filepath.exists():
         return FileResponse(filepath)
     return JSONResponse(
         status_code=404,
-        content={"error": f"File not found: {filename}"}
+        content={"error": "File not found"}
     )
 
 
@@ -355,8 +374,8 @@ async def get_qr_code():
         import io
         
         local_ip = get_local_ip()
-        camera_url = f"http://{local_ip}:8000/camera"
-        
+        camera_url = f"http://{local_ip}:{SERVER_PORT}/camera"
+
         # Generate QR code
         qr = qrcode.QRCode(
             version=1,
@@ -389,9 +408,9 @@ async def get_qr_data():
     """Get the data needed to generate a QR code client-side."""
     local_ip = get_local_ip()
     return {
-        "camera_url": f"http://{local_ip}:8000/camera",
+        "camera_url": f"http://{local_ip}:{SERVER_PORT}/camera",
         "local_ip": local_ip,
-        "port": 8000
+        "port": SERVER_PORT,
     }
 
 
@@ -461,6 +480,8 @@ async def ebay_oauth_callback(request: Request):
     """
     
     if error:
+        safe_error = html_escape(str(error))
+        safe_error_desc = html_escape(str(error_description))
         return HTMLResponse(content=f"""
         <!DOCTYPE html>
         <html>
@@ -479,8 +500,8 @@ async def ebay_oauth_callback(request: Request):
                 <div class="app-name">myBay</div>
                 <h1>Authorization Declined</h1>
                 <div class="error">
-                    <strong>Error:</strong> {error}<br>
-                    <strong>Details:</strong> {error_description}
+                    <strong>Error:</strong> {safe_error}<br>
+                    <strong>Details:</strong> {safe_error_desc}
                 </div>
                 <p>You can close this window and try again from the app.</p>
                 <a href="#" onclick="closeWindow(); return false;" class="btn">Close Window</a>
@@ -516,9 +537,6 @@ async def ebay_oauth_callback(request: Request):
     
     # Exchange code for tokens
     try:
-        # Import here to avoid circular imports
-        import sys
-        sys.path.insert(0, str(PROJECT_ROOT))
         from ebay.auth import get_auth
         
         auth = get_auth()
@@ -539,7 +557,8 @@ async def ebay_oauth_callback(request: Request):
         
         # Get environment for display
         env_label = "Production" if auth.config._active_environment == "production" else "Sandbox"
-        
+        safe_username = html_escape(str(username))
+
         return HTMLResponse(content=f"""
         <!DOCTYPE html>
         <html>
@@ -550,9 +569,9 @@ async def ebay_oauth_callback(request: Request):
                 h1 {{ color: #10b981; }}
                 .success {{ background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 24px; border-radius: 12px; margin: 20px 0; }}
                 .username {{ font-size: 24px; font-weight: bold; color: #065f46; margin: 10px 0; }}
-                .env-badge {{ 
-                    display: inline-block; padding: 4px 12px; 
-                    background: {'#dc2626' if env_label == 'Production' else '#f59e0b'}; 
+                .env-badge {{
+                    display: inline-block; padding: 4px 12px;
+                    background: {'#dc2626' if env_label == 'Production' else '#f59e0b'};
                     color: white; border-radius: 20px; font-size: 12px; font-weight: bold;
                     margin-bottom: 10px;
                 }}
@@ -568,13 +587,13 @@ async def ebay_oauth_callback(request: Request):
                 <div class="success">
                     <div class="env-badge">{env_label}</div>
                     <p style="margin: 0; color: #065f46;">Signed in as:</p>
-                    <p class="username">🏪 {username}</p>
+                    <p class="username">🏪 {safe_username}</p>
                 </div>
                 <p>You can close this window and return to the app.</p>
                 <p>Click <strong>🔄 Refresh</strong> in Settings to see your account.</p>
                 <a href="#" onclick="closeWindow(); return false;" class="btn">Close Window</a>
                 <p class="token-info">
-                    Token expires in {tokens.expires_in // 3600} hours • 
+                    Token expires in {tokens.expires_in // 3600} hours •
                     Refresh token: {'✅' if tokens.refresh_token else '❌'}
                 </p>
             </div>
@@ -583,6 +602,7 @@ async def ebay_oauth_callback(request: Request):
         """)
         
     except Exception as e:
+        safe_error_msg = html_escape(str(e))
         return HTMLResponse(content=f"""
         <!DOCTYPE html>
         <html>
@@ -600,7 +620,7 @@ async def ebay_oauth_callback(request: Request):
                 <div class="logo">📦</div>
                 <div class="app-name">myBay</div>
                 <h1>❌ Connection Failed</h1>
-                <div class="error">{str(e)}</div>
+                <div class="error">{safe_error_msg}</div>
                 <p>Please check your eBay API credentials and try again.</p>
                 <a href="#" onclick="closeWindow(); return false;" class="btn">Close Window</a>
             </div>
@@ -613,8 +633,6 @@ async def ebay_oauth_callback(request: Request):
 async def ebay_auth_status():
     """Check eBay authentication status."""
     try:
-        import sys
-        sys.path.insert(0, str(PROJECT_ROOT))
         from ebay.config import get_config
         
         config = get_config()
@@ -650,6 +668,7 @@ def _is_port_available(host: str, port: int) -> bool:
 
 def run_server(host: str = "0.0.0.0", port: int = 8000):
     """Run the server with uvicorn. Tries ports 8000-8010 if default is taken."""
+    global SERVER_PORT
     import uvicorn
 
     # Find an available port
@@ -665,6 +684,7 @@ def run_server(host: str = "0.0.0.0", port: int = 8000):
     if port != original_port:
         print(f"⚠️  Port {original_port} in use, using {port} instead")
 
+    SERVER_PORT = port
     local_ip = get_local_ip()
     print("\n" + "="*60)
     print("  📦 myBay - Camera Server")

@@ -129,14 +129,36 @@ ASSISTANT_SCHEMA = {
 class BusinessAssistant:
     """
     Parses natural language into structured expense/income/mileage entries.
-    Uses the same OpenAI API and patterns as ProductAnalyzer.
+    Supports both OpenAI and Ollama backends based on user preferences.
     """
 
-    def __init__(self, api_key: str = None, model: str = None):
+    def __init__(self, api_key: str = None, model: str = None, backend: str = None):
         _load_runtime_env()
-        self.api_key = (api_key or os.getenv("OPENAI_API_KEY", "")).strip()
-        self.model = (model or os.getenv("OPENAI_VISION_MODEL", DEFAULT_OPENAI_MODEL)).strip()
-        self.base_url = OPENAI_BASE_URL.rstrip("/")
+
+        # Detect backend from presets if not explicitly given
+        if backend is None:
+            try:
+                from core.presets import get_presets
+                backend = get_presets().ai_backend
+            except Exception:
+                backend = "auto"
+
+        if backend == "auto":
+            from core.analyzer_factory import detect_available_backend
+            backend = detect_available_backend() or "openai"
+
+        self._backend = backend
+
+        if self._backend == "ollama":
+            from core.ollama import DEFAULT_OLLAMA_URL, DEFAULT_OLLAMA_MODEL
+            self.model = model or os.getenv("OLLAMA_VISION_MODEL", "").strip() or DEFAULT_OLLAMA_MODEL
+            self.base_url = (os.getenv("OLLAMA_URL", "").strip() or DEFAULT_OLLAMA_URL).rstrip("/")
+            self.api_key = ""  # not needed
+        else:
+            self.api_key = (api_key or os.getenv("OPENAI_API_KEY", "")).strip()
+            self.model = (model or os.getenv("OPENAI_VISION_MODEL", DEFAULT_OPENAI_MODEL)).strip()
+            self.base_url = OPENAI_BASE_URL.rstrip("/")
+
         self._client = httpx.Client(timeout=30.0)
 
     def __del__(self):
@@ -145,13 +167,63 @@ class BusinessAssistant:
 
     def parse_message(self, message: str) -> dict:
         """
-        Send a natural language message to OpenAI and get structured entries back.
+        Send a natural language message and get structured entries back.
 
         Returns dict with keys: reply, expenses, income, mileage
         """
+        if self._backend == "ollama":
+            return self._parse_with_ollama(message)
+        return self._parse_with_openai(message)
+
+    def _parse_with_ollama(self, message: str) -> dict:
+        """Parse message using local Ollama."""
+        prompt = ASSISTANT_PROMPT.replace("{today}", date.today().isoformat())
+        schema_hint = json.dumps(ASSISTANT_SCHEMA["properties"], indent=2)
+        system = (
+            prompt
+            + "\n\nYou MUST respond with ONLY valid JSON matching this schema:\n"
+            + schema_hint
+        )
+
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": message},
+            ],
+            "stream": False,
+            "options": {"temperature": 0.3, "num_predict": 2048},
+        }
+
+        try:
+            response = self._client.post(
+                f"{self.base_url}/api/chat", json=payload, timeout=120.0,
+            )
+            if response.status_code >= 400:
+                return {
+                    "reply": f"Ollama error ({response.status_code}): {response.text[:200]}",
+                    "expenses": [], "income": [], "mileage": [],
+                }
+
+            raw = response.json().get("message", {}).get("content", "")
+            parsed = self._parse_json(raw)
+            return {
+                "reply": parsed.get("reply") or "Done!",
+                "expenses": parsed.get("expenses") or [],
+                "income": parsed.get("income") or [],
+                "mileage": parsed.get("mileage") or [],
+            }
+        except Exception as exc:
+            return {
+                "reply": f"Ollama error: {type(exc).__name__}: {str(exc)[:200]}",
+                "expenses": [], "income": [], "mileage": [],
+            }
+
+    def _parse_with_openai(self, message: str) -> dict:
+        """Parse message using OpenAI API."""
         if not self.api_key:
             return {
-                "reply": "OpenAI API key not configured. Set OPENAI_API_KEY in your environment.",
+                "reply": "OpenAI API key not configured. Set OPENAI_API_KEY in your .env, or switch to Ollama in Settings.",
                 "expenses": [], "income": [], "mileage": [],
             }
 
@@ -193,7 +265,6 @@ class BusinessAssistant:
             raw = self._extract_text(result)
             parsed = self._parse_json(raw)
 
-            # Ensure all required keys exist and are never None
             return {
                 "reply": parsed.get("reply") or "Done!",
                 "expenses": parsed.get("expenses") or [],

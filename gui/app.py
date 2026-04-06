@@ -2431,6 +2431,8 @@ class MyBayApp(ctk.CTk):
         self.bind_all("<MouseWheel>", self._on_global_mousewheel, add="+")
         self.bind_all("<Button-4>", self._on_global_mousewheel, add="+")
         self.bind_all("<Button-5>", self._on_global_mousewheel, add="+")
+        # Tk 9.0 on macOS uses <TouchpadScroll> instead of <MouseWheel>
+        self.bind_all("<TouchpadScroll>", self._on_global_mousewheel, add="+")
         self._mousewheel_bound = True
 
     def _is_widget_descendant(self, widget, ancestor) -> bool:
@@ -2449,20 +2451,35 @@ class MyBayApp(ctk.CTk):
         return False
 
     def _on_global_mousewheel(self, event):
-        """Ensure mouse wheel scroll works reliably for settings on desktop."""
-        if not hasattr(self, "settings_frame"):
-            return
+        """Route mouse wheel events to whichever CTkScrollableFrame the cursor is over."""
         try:
-            if not self.settings_frame.winfo_ismapped():
-                return
             hovered = self.winfo_containing(self.winfo_pointerx(), self.winfo_pointery())
         except Exception:
             return
 
-        if hovered is None or not self._is_widget_descendant(hovered, self.settings_frame):
+        if hovered is None:
             return
 
-        canvas = getattr(self.settings_frame, "_parent_canvas", None)
+        # Walk up from the hovered widget to find the nearest CTkScrollableFrame
+        import customtkinter as _ctk
+        scrollable = None
+        current = hovered
+        while current is not None:
+            if isinstance(current, _ctk.CTkScrollableFrame):
+                scrollable = current
+                break
+            try:
+                parent_name = current.winfo_parent()
+                if not parent_name:
+                    break
+                current = current.nametowidget(parent_name)
+            except Exception:
+                break
+
+        if scrollable is None:
+            return
+
+        canvas = getattr(scrollable, "_parent_canvas", None)
         if canvas is None:
             return
 
@@ -2474,8 +2491,15 @@ class MyBayApp(ctk.CTk):
             delta = int(getattr(event, "delta", 0))
             if delta == 0:
                 return
-            # macOS typically emits small deltas; Windows emits ±120 multiples.
-            steps = int(-delta / 120) if abs(delta) >= 120 else (-1 if delta > 0 else 1)
+            # Tk 9.0 <TouchpadScroll> on macOS: unsigned 16-bit values where
+            # values > 32767 represent negative scroll (up).
+            if delta > 32767:
+                delta = delta - 65536
+            # macOS typically emits small deltas; Windows emits +/-120 multiples.
+            if abs(delta) >= 120:
+                steps = int(-delta / 120)
+            else:
+                steps = -1 if delta > 0 else 1
 
         try:
             canvas.yview_scroll(steps, "units")

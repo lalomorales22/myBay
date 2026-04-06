@@ -313,13 +313,17 @@ class TestSetupWizard:
         """Test needs_setup check."""
         from data.database import Database
         from core.presets import MybayPresets, needs_setup
-        
+
         db = Database(tmp_path / "test.db")
-        
+
         import data.database
+        import core.presets
         original_get_db = data.database.get_db
         data.database.get_db = lambda: db
-        
+
+        # Reset global presets cache so we get a fresh load from the temp db
+        core.presets._presets = None
+
         try:
             # Fresh database - needs setup
             assert needs_setup()

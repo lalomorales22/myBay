@@ -77,7 +77,7 @@ def test_ollama_check_status_mock():
         result = check_ollama_status("http://fake:11434")
         print_result(result is False, "Returns False on connection error")
 
-    return True
+    assert True
 
 
 def test_get_ollama_models_mock():
@@ -100,7 +100,7 @@ def test_get_ollama_models_mock():
         print_result(len(models) == 2, f"Got {len(models)} models")
         print_result("qwen3.5:2b" in models, "qwen3.5:2b found")
 
-    return True
+    assert True
 
 
 def test_has_vision_model_mock():
@@ -122,7 +122,7 @@ def test_has_vision_model_mock():
         result = has_vision_model("http://fake:11434")
         print_result(result is True, "Detects moondream as vision model")
 
-    return True
+    assert True
 
 
 def test_ollama_analyzer_init():
@@ -147,7 +147,7 @@ def test_ollama_analyzer_init():
         print_result(analyzer.model == "minicpm-v", "Env var model override")
         print_result(analyzer.base_url == "http://env:5555", "Env var URL override")
 
-    return True
+    assert True
 
 
 def test_ollama_json_parsing():
@@ -182,7 +182,7 @@ def test_ollama_json_parsing():
     result = analyzer._parse_json_response(broken)
     print_result(result.get("title") == "Broken Item", "Regex fallback extracted title")
 
-    return True
+    assert True
 
 
 def test_ollama_validate_product_data():
@@ -228,7 +228,7 @@ def test_ollama_validate_product_data():
     validated = analyzer._validate_product_data(data)
     print_result(len(validated["category_keywords"]) == 3, "String keywords split to list")
 
-    return True
+    assert True
 
 
 def test_ollama_connection_live():
@@ -237,7 +237,7 @@ def test_ollama_connection_live():
 
     if not ollama_available():
         print_result(True, "SKIPPED — Ollama not running")
-        return True
+        assert True
 
     result = check_ollama_status()
     print_result(result is True, "Ollama is reachable")
@@ -249,7 +249,7 @@ def test_ollama_connection_live():
     status = analyzer.check_ollama_status()
     print_result(isinstance(status, bool), f"Analyzer status check: {status}")
 
-    return True
+    assert True
 
 
 def test_ollama_analyze_live():
@@ -258,16 +258,16 @@ def test_ollama_analyze_live():
 
     if not ollama_available():
         print_result(True, "SKIPPED — Ollama not running")
-        return True
+        assert True
 
     if not has_vision_model():
         print_result(True, "SKIPPED — No vision model available")
-        return True
+        assert True
 
     sample = Path(__file__).parent / "samples" / "test_product.jpg"
     if not sample.exists():
         print_result(True, "SKIPPED — No test image found")
-        return True
+        assert True
 
     analyzer = OllamaAnalyzer()
     result = analyzer.analyze_images([str(sample)])
@@ -277,7 +277,7 @@ def test_ollama_analyze_live():
     print(f"   Price: ${result.suggested_price_usd:.2f}")
     print(f"   Condition: {result.condition}")
 
-    return True
+    assert True
 
 
 # ========== Analyzer Factory Tests ==========
@@ -290,7 +290,7 @@ def test_analyzer_factory_openai():
         analyzer = get_analyzer("openai")
         print_result(isinstance(analyzer, ProductAnalyzer), "Returns ProductAnalyzer")
 
-    return True
+    assert True
 
 
 def test_analyzer_factory_ollama():
@@ -301,7 +301,7 @@ def test_analyzer_factory_ollama():
         analyzer = get_analyzer("ollama")
         print_result(isinstance(analyzer, OllamaAnalyzer), "Returns OllamaAnalyzer")
 
-    return True
+    assert True
 
 
 def test_analyzer_factory_ollama_not_running():
@@ -312,11 +312,11 @@ def test_analyzer_factory_ollama_not_running():
         try:
             get_analyzer("ollama")
             print_result(False, "Should have raised RuntimeError")
-            return False
+            assert False, "Should have raised RuntimeError"
         except RuntimeError as e:
             print_result("not running" in str(e).lower(), f"Correct error: {str(e)[:60]}")
 
-    return True
+    assert True
 
 
 def test_analyzer_factory_auto_detect():
@@ -354,11 +354,11 @@ def test_analyzer_factory_auto_detect():
                 try:
                     get_analyzer(None)
                     print_result(False, "Should have raised RuntimeError")
-                    return False
+                    assert False, "Should have raised RuntimeError"
                 except RuntimeError as e:
                     print_result("no ai backend" in str(e).lower(), "Priority 4: Nothing -> clear error")
 
-    return True
+    assert True
 
 
 def test_detect_available_backend():
@@ -383,7 +383,7 @@ def test_detect_available_backend():
             result = detect_available_backend()
             print_result(result is None, "Nothing available -> None")
 
-    return True
+    assert True
 
 
 # ========== Presets Tests ==========
@@ -431,7 +431,7 @@ def test_presets_ai_fields():
     print_result(loaded.ollama_model == "qwen3.5:2b", "Old data defaults ollama_model")
     print_result(loaded.turbo_mode is True, "Old data preserves turbo_mode")
 
-    return True
+    assert True
 
 
 def test_shared_analysis_prompt():
@@ -444,7 +444,7 @@ def test_shared_analysis_prompt():
     print_result("JSON" in system_prompt, "Contains JSON instruction")
     print_result("title" in system_prompt, "Contains schema fields")
 
-    return True
+    assert True
 
 
 # ========== Run All ==========
@@ -488,8 +488,8 @@ def run_all_tests(skip_ollama: bool = False):
 
     for name, fn in tests:
         try:
-            result = fn()
-            results.append((name, result))
+            fn()
+            results.append((name, True))
         except Exception as e:
             print(f"\n❌ {name} CRASHED: {e}")
             import traceback

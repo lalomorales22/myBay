@@ -1,4 +1,4 @@
-# myBay - Requirements
+# myBay - Runtime Requirements
 # Pinned to tested versions for stability
 
 # Core dependencies
@@ -20,9 +20,3 @@ onnxruntime==1.24.1    # Required by rembg
 
 # Desktop GUI
 customtkinter==5.2.2   # Modern Tkinter widgets
-
-# Packaging
-pyinstaller==6.18.0    # macOS/Windows app bundling
-
-# Development/Testing
-pytest==9.0.2          # Testing framework
