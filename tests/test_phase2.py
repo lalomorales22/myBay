@@ -144,32 +144,34 @@ def test_watcher():
     print_header("Testing File Watcher")
 
     try:
+        from unittest.mock import patch, MagicMock
         from core.watcher import QueueWatcher, ImageBatch
 
-        # Create watcher
+        # Create watcher — mock the analyzer so it works without OpenAI/Ollama
         test_queue = Path(__file__).parent / "test_queue"
         test_queue.mkdir(exist_ok=True)
 
-        watcher = QueueWatcher(test_queue)
-        print_result(True, f"QueueWatcher created: {watcher.queue_dir}")
+        with patch("core.watcher.get_analyzer", return_value=MagicMock()):
+            watcher = QueueWatcher(test_queue)
+            print_result(True, f"QueueWatcher created: {watcher.queue_dir}")
 
-        # Test callbacks
-        received_batches = []
+            # Test callbacks
+            received_batches = []
 
-        def on_batch(batch):
-            received_batches.append(batch)
+            def on_batch(batch):
+                received_batches.append(batch)
 
-        watcher.on_images_received = on_batch
-        print_result(True, "Callbacks configured")
+            watcher.on_images_received = on_batch
+            print_result(True, "Callbacks configured")
 
-        # Start watcher
-        watcher.start()
-        print_result(True, "Watcher started")
+            # Start watcher
+            watcher.start()
+            print_result(True, "Watcher started")
 
-        # Stop watcher
-        time.sleep(0.5)
-        watcher.stop()
-        print_result(True, "Watcher stopped")
+            # Stop watcher
+            time.sleep(0.5)
+            watcher.stop()
+            print_result(True, "Watcher stopped")
 
         # Cleanup
         import shutil
