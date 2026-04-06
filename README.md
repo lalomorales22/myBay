@@ -1,4 +1,5 @@
 # myBay
+<img width="1536" height="1024" alt="mybay" src="https://github.com/user-attachments/assets/4106b167-879e-4a07-a21c-96186d8ad2ab" />
 
 ### Snap. List. Sell. Run the business.
 
